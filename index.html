@@ -2352,6 +2352,53 @@
         document.getElementById('currentDate').textContent = capitalize(now.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' }));
     })();
 
+    // ===== PWA =====
+    if ('serviceWorker' in navigator) {
+        window.addEventListener('load', () => {
+            navigator.serviceWorker.register('sw.js').then((registration) => {
+                registration.addEventListener('updatefound', () => {
+                    const newWorker = registration.installing;
+                    if (!newWorker) return;
+                    newWorker.addEventListener('statechange', () => {
+                        if (newWorker.state === 'activated' && navigator.serviceWorker.controller) {
+                            sessionStorage.setItem('swUpdated', '1');
+                            window.location.reload();
+                        }
+                    });
+                });
+            }).catch((err) => console.error('SW registration failed:', err));
+        });
+    }
+
+    if (sessionStorage.getItem('swUpdated') === '1') {
+        sessionStorage.removeItem('swUpdated');
+        showNotification('Приложение обновлено!');
+    }
+
+    let deferredPrompt = null;
+    const installBtn = document.getElementById('installBtn');
+
+    window.addEventListener('beforeinstallprompt', (e) => {
+        e.preventDefault();
+        deferredPrompt = e;
+        if (installBtn) installBtn.style.display = '';
+    });
+
+    window.addEventListener('appinstalled', () => {
+        deferredPrompt = null;
+        if (installBtn) installBtn.style.display = 'none';
+        showNotification('Приложение установлено!');
+    });
+
+    function installApp() {
+        if (!deferredPrompt) return;
+        deferredPrompt.prompt();
+        deferredPrompt.userChoice.finally(() => {
+            deferredPrompt = null;
+            if (installBtn) installBtn.style.display = 'none';
+        });
+    }
+
     loadSchedule();
     loadTasks();
 </script>
