@@ -11,6 +11,7 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/golos-text@5/600.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/unbounded@5/600.css">
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/unbounded@5/800.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
     <style>
         :root {
@@ -73,12 +74,12 @@
         @keyframes drift { to { transform:translate3d(45px,35px,0) scale(1.09); } }
 
         .app {
-            position:relative; z-index:1; max-width:1600px; margin:0 auto; padding:22px 0 64px;
+            position:relative; z-index:1; max-width:1600px; margin:0 auto; padding:12px 0 40px;
         }
 
         /* ===== Шапка ===== */
         .head {
-            display:flex; align-items:center; gap:16px; margin-bottom:30px; flex-wrap:wrap;
+            display:flex; align-items:center; gap:16px; margin-bottom:16px; flex-wrap:wrap;
         }
         .logo {
             flex:none; width:48px; height:48px; border-radius:14px; display:grid; place-items:center;
@@ -111,8 +112,12 @@
 
         /* ===== Кнопки управления ===== */
         .controls {
-            display:flex; gap:10px; margin-bottom:30px; flex-wrap:wrap;
+            display:flex; gap:6px; margin-bottom:10px; flex-wrap:nowrap;
         }
+        .controls button {
+            flex:1; min-width:0; padding:8px 6px; font-size:12px; white-space:nowrap; text-align:center; justify-content:center;
+        }
+        .controls .btn-primary { padding:8px 6px; }
 
         button {
             padding:8px 16px;
@@ -170,16 +175,75 @@
             background:rgba(79,209,197,.08);
         }
 
+        /* ===== Выбор дня ===== */
+        .day-selector {
+            display:flex;
+            gap:4px;
+            margin-bottom:12px;
+            overflow-x:auto;
+            -webkit-overflow-scrolling:touch;
+            scrollbar-width:none;
+            position:sticky;
+            top:0;
+            z-index:20;
+            background:var(--bg0);
+            padding:8px 0;
+        }
+        .day-selector::-webkit-scrollbar { display:none; }
+        .day-selector-btn {
+            flex:1;
+            min-width:0;
+            padding:8px 4px;
+            border:1px solid var(--line);
+            border-radius:10px;
+            background:var(--surface);
+            color:var(--muted);
+            font-size:12px;
+            font-weight:600;
+            cursor:pointer;
+            text-align:center;
+            transition:all .2s;
+            white-space:nowrap;
+        }
+        .day-selector-btn:hover {
+            border-color:rgba(255,255,255,.15);
+            color:var(--text);
+        }
+        .day-selector-btn.active {
+            background:var(--accent);
+            color:var(--accent-ink);
+            border-color:var(--accent);
+            box-shadow:0 4px 14px rgba(255,180,84,.3);
+        }
+        .day-selector-btn .day-short { display:inline; }
+        .day-selector-btn .day-full { display:none; }
+
         /* ===== Сетка расписания ===== */
         .schedule-container {
+            margin-bottom:16px;
+            border-radius:12px;
+            border:1px solid var(--line);
+            background:rgba(255,255,255,.015);
+        }
+        .schedule-container:not(.week-view-active) {
+            max-height:calc(100vh - 180px);
+            overflow-y:auto;
+            -webkit-overflow-scrolling:touch;
+        }
+        .schedule-container.week-view-active {
             overflow-x:auto;
-            margin-bottom:30px;
+            overflow-y:hidden;
         }
         .schedule-grid {
             display:grid;
-            grid-template-columns:140px repeat(6,1fr);
-            gap:8px;
-            min-width:900px;
+            grid-template-columns:70px 1fr;
+            gap:4px;
+            padding:4px;
+        }
+        .schedule-grid.week-view {
+            grid-template-columns:80px repeat(6,1fr);
+            min-width:860px;
+            padding:4px;
         }
 
         .header-cell {
@@ -198,9 +262,28 @@
             background:rgba(255,180,84,.08);
         }
 
+        .day-header-cell {
+            background:var(--surface);
+            padding:6px 4px;
+            text-align:center;
+            font-weight:600;
+            border-radius:10px;
+            font-size:.8em;
+            border:1px solid var(--line);
+            color:var(--muted);
+            position:sticky;
+            top:0;
+            z-index:6;
+        }
+        .day-header-cell.today {
+            color:var(--accent);
+            border-color:rgba(255,180,84,.3);
+            background:rgba(255,180,84,.08);
+        }
+
         .time-cell {
             background:var(--surface);
-            padding:10px;
+            padding:4px 4px;
             text-align:center;
             font-weight:600;
             border-radius:10px;
@@ -208,9 +291,17 @@
             flex-direction:column;
             align-items:center;
             justify-content:center;
-            gap:4px;
-            font-size:.9em;
+            gap:1px;
+            font-size:.8em;
             border:1px solid var(--line);
+            position:sticky;
+            top:0;
+            z-index:5;
+        }
+        .week-view-active .time-cell {
+            position:sticky;
+            left:0;
+            z-index:7;
         }
         .time-range {
             font-size:.78em;
@@ -230,8 +321,8 @@
         }
 
         .slot {
-            min-height:100px;
-            padding:8px;
+            min-height:56px;
+            padding:4px 6px;
             border-radius:10px;
             border:1.5px dashed rgba(255,255,255,.08);
             transition:all .2s;
@@ -245,14 +336,14 @@
 
         /* ===== Карточки уроков ===== */
         .lesson {
-            padding:12px;
-            border-radius:12px;
+            padding:6px 8px;
+            border-radius:10px;
             background:var(--surface2);
             font-weight:500;
             cursor:move;
             transition:all .2s;
             position:relative;
-            margin-bottom:6px;
+            margin-bottom:3px;
             border-left:3px solid transparent;
             box-shadow:0 2px 8px rgba(0,0,0,.2);
         }
@@ -288,18 +379,25 @@
         }
 
         .lesson-time {
-            font-size:.73em;
+            font-size:.7em;
             color:var(--muted);
-            margin-bottom:6px;
+            margin-bottom:1px;
             font-weight:500;
             display:flex;
             align-items:center;
             gap:5px;
         }
 
+        .lesson-duration {
+            font-size:.65em;
+            color:var(--faint);
+            margin-bottom:2px;
+            font-weight:500;
+        }
+
         .lesson-name {
-            font-size:.95em;
-            margin-bottom:3px;
+            font-size:.9em;
+            margin-bottom:1px;
             font-weight:600;
             color:var(--text);
         }
@@ -307,6 +405,16 @@
         .lesson-subject {
             font-size:.83em;
             color:var(--faint);
+        }
+
+        .lesson-cancelled {
+            opacity:.45;
+            border-left-color:var(--danger) !important;
+            background:rgba(255,93,108,.04);
+        }
+        .lesson-cancelled .lesson-type {
+            background:rgba(255,93,108,.15);
+            color:var(--danger);
         }
 
         .lesson-actions {
@@ -350,8 +458,8 @@
             gap:15px;
             justify-content:center;
             flex-wrap:wrap;
-            margin:20px 0;
-            padding:14px;
+            margin:12px 0;
+            padding:10px;
             background:var(--surface);
             border:1px solid var(--line);
             border-radius:12px;
@@ -374,8 +482,8 @@
         /* ===== Трекер задач ===== */
         .tracker-section {
             border-top:1px solid var(--line);
-            padding-top:30px;
-            margin-top:30px;
+            padding-top:20px;
+            margin-top:16px;
         }
         .tracker-header {
             display:flex;
@@ -691,7 +799,7 @@
         .schedule-filters {
             display:flex;
             gap:10px;
-            margin-bottom:18px;
+            margin-bottom:10px;
             flex-wrap:wrap;
             align-items:flex-end;
         }
@@ -956,22 +1064,64 @@
         }
 
         @media (max-width:768px) {
+            body { padding:10px; }
+            .head { gap:10px; margin-bottom:16px; }
+            .logo { width:38px; height:38px; border-radius:10px; }
+            .logo svg { width:18px; height:18px; }
+            .head-text h1 { font-size:1.1em; }
+            .head-sub { font-size:.78rem; margin-top:3px; }
+            .ring { width:62px; height:62px; }
+            .ring-core { width:50px; height:50px; }
+            .ring-core b { font-size:.75rem; }
+            .ring-core small { font-size:.45rem; }
+            .controls { gap:4px; margin-bottom:10px; flex-wrap:nowrap; }
+            .controls button { padding:7px 3px; font-size:10.5px; }
+            .btn-text { display:none; }
+            .controls button i { margin:0; font-size:14px; }
+            .tracker-controls { gap:4px; flex-wrap:nowrap; }
+            .tracker-controls button { padding:7px 3px; font-size:10.5px; }
+            .tracker-controls button i { margin:0; font-size:14px; }
+            .tracker-controls .btn-text { display:none; }
             .schedule-grid {
-                grid-template-columns:110px repeat(6,1fr);
-                gap:6px;
-                min-width:700px;
+                grid-template-columns:56px 1fr;
+                gap:4px;
             }
-            .form-row { grid-template-columns:1fr; }
-            .head-text h1 { font-size:1.2em; }
-            .ring { width:74px; height:74px; }
-            .ring-core { width:58px; height:58px; }
-            .ring-core b { font-size:.82rem; }
-            .controls { flex-direction:column; }
-            .controls button { justify-content:center; }
-            .tracker-controls { flex-direction:column; }
-            .tracker-controls button { justify-content:center; }
-            .schedule-filters { flex-direction:column; align-items:stretch; }
-            .filter-trigger { min-width:100%; }
+            .schedule-container {
+                max-height:calc(100vh - 180px);
+                border-radius:8px;
+            }
+            .slot { min-height:52px; padding:3px 5px; }
+            .lesson { padding:5px 7px; margin-bottom:3px; border-radius:8px; }
+            .lesson-name { font-size:.88em; }
+            .lesson-subject { font-size:.76em; }
+            .lesson-time { font-size:.68em; }
+            .lesson-duration { font-size:.63em; margin-bottom:2px; }
+            .lesson-type { font-size:.65em; padding:1px 6px; top:5px; right:5px; }
+            .lesson-actions button { padding:3px 6px; font-size:11px; }
+            .time-cell { font-size:.72em; padding:4px 2px; border-radius:8px; }
+            .time-range { font-size:.65em; }
+            .time-cell button { font-size:9px; padding:2px 5px; }
+            .day-selector { gap:3px; margin-bottom:8px; padding:6px 0; }
+            .day-selector-btn { padding:6px 2px; font-size:10.5px; border-radius:8px; }
+            .form-row { grid-template-columns:1fr; gap:10px; }
+            .form-group input, .form-group select { padding:8px 10px; font-size:13px; }
+            .modal-content { margin:5% auto; padding:20px; border-radius:14px; }
+            .filter-trigger { padding:6px 10px; font-size:.8em; }
+            .legend { gap:8px; padding:10px; }
+            .legend-item { font-size:.8em; gap:5px; }
+            .legend-color { width:16px; height:16px; }
+            .tracker-header { gap:10px; }
+            .tracker-header h2 { font-size:.95rem; }
+            .task-item { padding:10px 10px 10px 16px; }
+            .task-title { font-size:.88em; }
+            .task-meta { font-size:.72em; gap:6px; }
+            .notification { font-size:.85rem; padding:12px 18px; top:10px; right:10px; }
+            .bottom-controls { margin-top:20px; padding-top:15px; }
+            .btn-reset-icon { width:42px; height:42px; font-size:17px; }
+        }
+        @media (min-width:769px) {
+            .day-selector-btn .day-short { display:none; }
+            .day-selector-btn .day-full { display:inline; }
         }
 
         @media (prefers-reduced-motion:reduce) {
@@ -1002,10 +1152,10 @@
 
     <!-- Кнопки управления -->
     <div class="controls">
-        <button class="btn-primary" onclick="openAddTimeModal()">+ Добавить время</button>
-        <button onclick="saveSchedule()">Сохранить расписание</button>
-        <button onclick="exportSchedule()">Экспорт расписания</button>
-        <button onclick="document.getElementById('importScheduleFile').click()">Импорт расписания</button>
+        <button class="btn-primary" onclick="openAddTimeModal()"><i class="fa-solid fa-plus"></i><span class="btn-text"> Добавить время</span></button>
+        <button onclick="saveSchedule()"><i class="fa-solid fa-floppy-disk"></i><span class="btn-text"> Сохранить</span></button>
+        <button onclick="exportSchedule()"><i class="fa-solid fa-download"></i><span class="btn-text"> Экспорт</span></button>
+        <button onclick="document.getElementById('importScheduleFile').click()"><i class="fa-solid fa-upload"></i><span class="btn-text"> Импорт</span></button>
         <input type="file" id="importScheduleFile" style="display:none" accept=".json" onchange="importSchedule(event)">
     </div>
 
@@ -1043,16 +1193,9 @@
     </div>
 
     <!-- Сетка расписания -->
-    <div class="schedule-container">
-        <div class="schedule-grid" id="scheduleGrid">
-            <div class="header-cell">Время</div>
-            <div class="header-cell">Понедельник</div>
-            <div class="header-cell">Вторник</div>
-            <div class="header-cell">Среда</div>
-            <div class="header-cell">Четверг</div>
-            <div class="header-cell">Пятница</div>
-            <div class="header-cell">Суббота</div>
-        </div>
+    <div class="day-selector" id="daySelector"></div>
+    <div class="schedule-container" id="scheduleContainer">
+        <div class="schedule-grid" id="scheduleGrid"></div>
     </div>
 
     <!-- Легенда -->
@@ -1091,10 +1234,10 @@
                 <div class="mini-ring ring-completed" id="ringCompleted" role="img" aria-label="Выполнение задач">
                     <div class="mini-ring-core"><b id="ringCompletedPct">0%</b><small>выполнено</small></div>
                 </div>
-                <button class="btn-primary" onclick="toggleTaskForm()">+ Добавить задачу</button>
-                <button onclick="saveTasksToStorage()">Сохранить задачи</button>
-                <button onclick="exportTasks()">Экспорт задач</button>
-                <button onclick="document.getElementById('importTasksFile').click()">Импорт задач</button>
+                <button class="btn-primary" onclick="toggleTaskForm()"><i class="fa-solid fa-plus"></i><span class="btn-text"> Добавить задачу</span></button>
+                <button onclick="saveTasksToStorage()"><i class="fa-solid fa-floppy-disk"></i><span class="btn-text"> Сохранить</span></button>
+                <button onclick="exportTasks()"><i class="fa-solid fa-download"></i><span class="btn-text"> Экспорт</span></button>
+                <button onclick="document.getElementById('importTasksFile').click()"><i class="fa-solid fa-upload"></i><span class="btn-text"> Импорт</span></button>
                 <input type="file" id="importTasksFile" style="display:none" accept=".json" onchange="importTasks(event)">
             </div>
         </div>
@@ -1195,6 +1338,7 @@
                 <select id="lessonType">
                     <option value="regular" selected>Р — Регулярный</option>
                     <option value="reschedule">П — Перенос</option>
+                    <option value="cancelled">О — Отмена</option>
                 </select>
             </div>
             <div class="form-actions">
@@ -1313,6 +1457,13 @@
     let currentFilter = 'all';
     let editingTaskId = null;
 
+    const dayShort = ['Пн','Вт','Ср','Чт','Пт','Сб'];
+    let currentDayIndex = (function() {
+        const jsDay = new Date().getDay();
+        const map = [6,0,1,2,3,4,5];
+        return map[jsDay] < 6 ? map[jsDay] : 0;
+    })();
+
     function calculateEndTime(startTime, duration) {
         const [hours, minutes] = startTime.split(':').map(Number);
         const startDate = new Date();
@@ -1333,27 +1484,60 @@
         return names[subject] || subject;
     }
 
+    function isWeekView() {
+        return window.innerWidth >= 769;
+    }
+
     function renderSchedule() {
         const grid = document.getElementById('scheduleGrid');
-        const oldSlots = grid.querySelectorAll('.time-cell, .slot');
-        oldSlots.forEach(slot => slot.remove());
-
+        grid.innerHTML = '';
         times.sort();
 
         const todayIdx = new Date().getDay();
         const dayMap = [6, 0, 1, 2, 3, 4, 5];
         const todayDay = days[dayMap[todayIdx]];
 
-        const headers = grid.querySelectorAll('.header-cell');
-        headers.forEach((h, i) => {
-            if (i > 0) {
-                const d = days[i - 1];
-                h.classList.toggle('today', d === todayDay);
-            }
-        });
+        const selector = document.getElementById('daySelector');
+        const weekView = isWeekView();
 
-        let totalSlots = times.length * days.length;
+        if (weekView) {
+            selector.style.display = 'none';
+            grid.classList.add('week-view');
+            document.getElementById('scheduleContainer').classList.add('week-view-active');
+        } else {
+            selector.style.display = '';
+            grid.classList.remove('week-view');
+            document.getElementById('scheduleContainer').classList.remove('week-view-active');
+        }
+
+        selector.innerHTML = '';
+        if (!weekView) {
+            days.forEach((day, i) => {
+                const btn = document.createElement('button');
+                btn.className = 'day-selector-btn' + (i === currentDayIndex ? ' active' : '');
+                btn.innerHTML = `<span class="day-short">${dayShort[i]}</span><span class="day-full">${dayNames[i]}</span>`;
+                btn.onclick = () => selectDay(i);
+                selector.appendChild(btn);
+            });
+        }
+
+        const visibleDays = weekView ? days : [days[currentDayIndex]];
+
+        let totalSlots = times.length * visibleDays.length;
         let filledSlots = 0;
+
+        if (weekView) {
+            const cornerCell = document.createElement('div');
+            cornerCell.className = 'day-header-cell';
+            cornerCell.textContent = 'Время';
+            grid.appendChild(cornerCell);
+            days.forEach((day, i) => {
+                const hc = document.createElement('div');
+                hc.className = 'day-header-cell' + (day === todayDay ? ' today' : '');
+                hc.textContent = dayNames[i];
+                grid.appendChild(hc);
+            });
+        }
 
         times.forEach(time => {
             const timeCell = document.createElement('div');
@@ -1362,11 +1546,11 @@
             timeCell.innerHTML = `
                 <div>${time}</div>
                 <div class="time-range">— ${endTime}</div>
-                <button onclick="deleteTimeSlot('${time}')">✕ Удалить</button>
+                <button onclick="deleteTimeSlot('${time}')">✕</button>
             `;
             grid.appendChild(timeCell);
 
-            days.forEach(day => {
+            visibleDays.forEach(day => {
                 const slot = document.createElement('div');
                 slot.className = 'slot';
                 slot.dataset.time = time;
@@ -1396,21 +1580,34 @@
         populateFilterDropdowns();
     }
 
+    function selectDay(index) {
+        currentDayIndex = index;
+        renderSchedule();
+        document.getElementById('scheduleContainer').scrollTo({ top: 0, behavior: 'smooth' });
+    }
+
+    window.addEventListener('resize', function() {
+        renderSchedule();
+    });
+
     function createLessonElement(lesson, time, day) {
         const lessonEl = document.createElement('div');
-        lessonEl.className = `lesson lesson-${lesson.subject}`;
+        const duration = lesson.duration || 50;
+        const endTime = calculateEndTime(time, duration);
+        const type = lesson.type || 'regular';
+        const typeLabels = { regular: 'Р', reschedule: 'П', cancelled: 'О' };
+        const typeLabel = typeLabels[type] || 'Р';
+        const isCancelled = type === 'cancelled';
+
+        lessonEl.className = `lesson lesson-${lesson.subject}${isCancelled ? ' lesson-cancelled' : ''}`;
         lessonEl.draggable = true;
         lessonEl.dataset.time = time;
         lessonEl.dataset.day = day;
 
-        const duration = lesson.duration || 50;
-        const endTime = calculateEndTime(time, duration);
-        const type = lesson.type || 'regular';
-        const typeLabel = type === 'regular' ? 'Р' : 'П';
-
         lessonEl.innerHTML = `
             <div class="lesson-type">${typeLabel}</div>
-            <div class="lesson-time">${time} — ${endTime} (${duration} мин)</div>
+            <div class="lesson-time">${time} — ${endTime}</div>
+            <div class="lesson-duration">${duration} мин</div>
             <div class="lesson-name">${lesson.name}</div>
             <div class="lesson-subject">${getSubjectName(lesson.subject)}</div>
             <div class="lesson-actions">
@@ -2078,6 +2275,40 @@
     }
 
     setInterval(saveTasks, 5000);
+
+    // ===== Swipe + keyboard day navigation =====
+    (function() {
+        const container = document.getElementById('scheduleContainer');
+        let touchStartX = 0;
+        let touchStartY = 0;
+
+        container.addEventListener('touchstart', function(e) {
+            touchStartX = e.touches[0].clientX;
+            touchStartY = e.touches[0].clientY;
+        }, { passive: true });
+
+        container.addEventListener('touchend', function(e) {
+            const dx = e.changedTouches[0].clientX - touchStartX;
+            const dy = e.changedTouches[0].clientY - touchStartY;
+            if (Math.abs(dx) > Math.abs(dy) && Math.abs(dx) > 50) {
+                if (dx < 0) navigateDay(1);
+                else navigateDay(-1);
+            }
+        }, { passive: true });
+
+        document.addEventListener('keydown', function(e) {
+            if (e.target.tagName === 'INPUT' || e.target.tagName === 'TEXTAREA' || e.target.tagName === 'SELECT') return;
+            if (e.key === 'ArrowLeft') navigateDay(-1);
+            if (e.key === 'ArrowRight') navigateDay(1);
+        });
+    })();
+
+    function navigateDay(delta) {
+        let next = currentDayIndex + delta;
+        if (next < 0) next = days.length - 1;
+        if (next >= days.length) next = 0;
+        selectDay(next);
+    }
 
     // Header
     (function initHeader() {
