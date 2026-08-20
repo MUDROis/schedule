@@ -233,11 +233,6 @@
             border:1px solid var(--line);
             background:rgba(255,255,255,.015);
         }
-        .schedule-container:not(.week-view-active) {
-            max-height:calc(100vh - 180px);
-            overflow-y:auto;
-            -webkit-overflow-scrolling:touch;
-        }
         .schedule-container.week-view-active {
             overflow-x:auto;
             overflow-y:hidden;
@@ -1095,7 +1090,6 @@
                 gap:4px;
             }
             .schedule-container {
-                max-height:calc(100vh - 180px);
                 border-radius:8px;
             }
             .slot { min-height:52px; padding:3px 5px; }
