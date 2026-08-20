@@ -1673,6 +1673,7 @@
             const lesson = schedule[data.time][data.day];
             schedule[targetTime][targetDay] = lesson;
             schedule[data.time][data.day] = null;
+            persistSchedule();
             renderSchedule();
             showNotification('Занятие перемещено!');
         } catch (err) {
@@ -1751,6 +1752,7 @@
             times.push(newTime);
         }
 
+        persistSchedule();
         renderSchedule();
         closeModal('lessonModal');
         showNotification('Занятие сохранено!');
@@ -1770,6 +1772,7 @@
         days.forEach(day => schedule[newTime][day] = null);
         times.push(newTime);
 
+        persistSchedule();
         renderSchedule();
         closeModal('timeModal');
         showNotification('Время добавлено!');
@@ -1779,6 +1782,7 @@
         if (confirm('Удалить это занятие?')) {
             if (schedule[time] && schedule[time][day]) {
                 schedule[time][day] = null;
+                persistSchedule();
                 renderSchedule();
                 showNotification('Занятие удалено!');
             }
@@ -1791,6 +1795,7 @@
 
         if (schedule[time] && schedule[time][day]) {
             schedule[time][day] = null;
+            persistSchedule();
             renderSchedule();
             closeModal('lessonModal');
             showNotification('Занятие удалено!');
@@ -1801,6 +1806,7 @@
         if (confirm(`Удалить весь временной слот ${time}?`)) {
             delete schedule[time];
             times = times.filter(t => t !== time);
+            persistSchedule();
             renderSchedule();
             showNotification('Время удалено!');
         }
@@ -1853,6 +1859,7 @@
         document.getElementById('taskPriority').value = 'medium';
 
         toggleTaskForm();
+        persistTasks();
         renderTasks();
         showNotification('Задача сохранена!');
     }
@@ -1940,6 +1947,7 @@
         const task = tasks.find(t => t.id === id);
         if (task) {
             task.completed = !task.completed;
+            persistTasks();
             renderTasks();
         }
     }
@@ -1959,6 +1967,7 @@
     function deleteTask(id) {
         if (confirm('Удалить задачу?')) {
             tasks = tasks.filter(t => t.id !== id);
+            persistTasks();
             renderTasks();
             showNotification('Задача удалена!');
         }
@@ -1967,6 +1976,7 @@
     function clearCompleted() {
         if (confirm('Удалить все выполненные задачи?')) {
             tasks = tasks.filter(t => !t.completed);
+            persistTasks();
             renderTasks();
             showNotification('Выполненные задачи удалены!');
         }
@@ -2020,6 +2030,7 @@
             if (draggedIndex !== -1 && targetIndex !== -1) {
                 const [removed] = tasks.splice(draggedIndex, 1);
                 tasks.splice(targetIndex, 0, removed);
+                persistTasks();
                 renderTasks();
             }
         }
@@ -2156,15 +2167,31 @@
         return true;
     }
 
+    function persistTasks() {
+        try {
+            localStorage.setItem('tasks', JSON.stringify(tasks));
+        } catch (e) {
+            showNotification('Ошибка сохранения задач!');
+        }
+    }
+
     function saveTasksToStorage() {
-        localStorage.setItem('tasks', JSON.stringify(tasks));
+        persistTasks();
         showNotification('Задачи сохранены!');
     }
 
     // ===== Export/Import =====
+    function persistSchedule() {
+        try {
+            localStorage.setItem('schedule', JSON.stringify(schedule));
+            localStorage.setItem('times', JSON.stringify(times));
+        } catch (e) {
+            showNotification('Ошибка сохранения расписания!');
+        }
+    }
+
     function saveSchedule() {
-        localStorage.setItem('schedule', JSON.stringify(schedule));
-        localStorage.setItem('times', JSON.stringify(times));
+        persistSchedule();
         showNotification('Расписание сохранено!');
     }
 
@@ -2203,6 +2230,7 @@
                     if (data.times) {
                         times = data.times;
                     }
+                    persistSchedule();
                     renderSchedule();
                     showNotification('Расписание импортировано!');
                 } catch (error) {
@@ -2232,6 +2260,7 @@
             reader.onload = function(e) {
                 try {
                     tasks = JSON.parse(e.target.result);
+                    persistTasks();
                     renderTasks();
                     showNotification('Задачи импортированы!');
                 } catch (error) {
@@ -2271,10 +2300,6 @@
         }
     }
 
-    function saveTasks() {
-        localStorage.setItem('tasks', JSON.stringify(tasks));
-    }
-
     function loadTasks() {
         const saved = localStorage.getItem('tasks');
         if (saved) {
@@ -2282,8 +2307,6 @@
         }
         renderTasks();
     }
-
-    setInterval(saveTasks, 5000);
 
     // ===== Swipe + keyboard day navigation =====
     (function() {
