@@ -222,6 +222,11 @@
             font-size:11px;
             padding:4px 8px;
             border-radius:8px;
+            opacity:0;
+            transition:opacity .2s;
+        }
+        .time-cell:hover button {
+            opacity:1;
         }
 
         .slot {
@@ -248,7 +253,7 @@
             transition:all .2s;
             position:relative;
             margin-bottom:6px;
-            border-left:4px solid transparent;
+            border-left:3px solid transparent;
             box-shadow:0 2px 8px rgba(0,0,0,.2);
         }
         .lesson:hover {
@@ -362,7 +367,7 @@
             width:20px;
             height:20px;
             border-radius:6px;
-            border-left:4px solid;
+            border-left:3px solid;
             background:var(--surface2);
         }
 
@@ -394,6 +399,21 @@
             gap:10px;
             align-items:center;
             flex-wrap:wrap;
+        }
+        .tracker-controls .mini-ring {
+            width:52px;
+            height:52px;
+            flex:none;
+        }
+        .tracker-controls .mini-ring-core {
+            width:40px;
+            height:40px;
+        }
+        .tracker-controls .mini-ring-core b {
+            font-size:.7rem;
+        }
+        .tracker-controls .mini-ring-core small {
+            font-size:.42rem;
         }
 
         .task-input-form {
@@ -628,27 +648,187 @@
             background:rgba(255,93,108,.1);
         }
 
-        /* ===== Статистика задач ===== */
-        .stats-bar {
-            display:flex;
-            gap:20px;
-            padding:12px 20px;
-            background:var(--surface);
-            border:1px solid var(--line);
-            border-radius:10px;
-            margin-bottom:15px;
-            font-size:.88em;
-            color:var(--muted);
+        /* ===== Статистика задач — кольцо ===== */
+        .mini-ring {
+            --p:0;
+            flex:none;
+            width:80px;
+            height:80px;
+            border-radius:50%;
+            background:conic-gradient(var(--ring-color) calc(var(--p)*1%),rgba(255,255,255,.07) 0);
+            display:grid;
+            place-items:center;
+            transition:--p .7s cubic-bezier(.22,1,.36,1);
         }
-        .stat-item {
+        .mini-ring-core {
+            width:62px;
+            height:62px;
+            border-radius:50%;
+            background:var(--bg1);
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            justify-content:center;
+            box-shadow:inset 0 0 0 1px var(--line);
+        }
+        .mini-ring-core b {
+            font-family:'Unbounded',sans-serif;
+            font-weight:600;
+            font-size:.85rem;
+            line-height:1;
+            color:var(--text);
+        }
+        .mini-ring-core small {
+            font-size:.5rem;
+            color:var(--muted);
+            letter-spacing:.08em;
+            text-transform:uppercase;
+            margin-top:3px;
+        }
+        .ring-completed { --ring-color:var(--accent); }
+
+        /* ===== Фильтры расписания ===== */
+        .schedule-filters {
+            display:flex;
+            gap:10px;
+            margin-bottom:18px;
+            flex-wrap:wrap;
+            align-items:flex-end;
+        }
+        .filter-group {
+            position:relative;
+            display:flex;
+            flex-direction:column;
+            gap:0;
+        }
+        .filter-group label {
+            font-size:.82em;
+            color:var(--muted);
+            font-weight:600;
+            margin-bottom:4px;
+            display:block;
+        }
+        .filter-trigger {
             display:flex;
             align-items:center;
             gap:8px;
+            padding:7px 12px;
+            border:1px solid var(--line);
+            border-radius:10px;
+            font-size:.85em;
+            font-family:inherit;
+            background:var(--surface);
+            color:var(--muted);
+            cursor:pointer;
+            transition:border-color .2s,box-shadow .2s;
+            min-width:150px;
+            user-select:none;
         }
-        .stat-number {
+        .filter-trigger:hover {
+            border-color:rgba(255,255,255,.15);
+            color:var(--text);
+        }
+        .filter-trigger.open {
+            border-color:var(--accent);
+            box-shadow:0 0 0 3px rgba(255,180,84,.15);
+        }
+        .filter-trigger .arrow {
+            margin-left:auto;
+            font-size:.7em;
+            transition:transform .2s;
+            color:var(--faint);
+        }
+        .filter-trigger.open .arrow {
+            transform:rotate(180deg);
+        }
+        .filter-trigger .count-badge {
+            background:var(--accent);
+            color:var(--accent-ink);
+            font-size:.72em;
             font-weight:700;
-            font-size:1.1em;
-            color:var(--accent);
+            padding:1px 7px;
+            border-radius:999px;
+            line-height:1.3;
+        }
+        .filter-panel {
+            display:none;
+            position:absolute;
+            top:calc(100% + 6px);
+            left:0;
+            z-index:100;
+            min-width:200px;
+            max-height:260px;
+            overflow-y:auto;
+            background:var(--surface);
+            border:1px solid var(--line);
+            border-radius:12px;
+            padding:6px 0;
+            box-shadow:0 14px 34px rgba(0,0,0,.45);
+            animation:popIn .2s cubic-bezier(.22,1,.36,1);
+        }
+        .filter-panel.open {
+            display:block;
+        }
+        .filter-panel-item {
+            display:flex;
+            align-items:center;
+            gap:8px;
+            padding:8px 14px;
+            cursor:pointer;
+            font-size:.85em;
+            color:var(--muted);
+            transition:background .15s,color .15s;
+        }
+        .filter-panel-item:hover {
+            background:rgba(255,255,255,.04);
+            color:var(--text);
+        }
+        .filter-panel-item.selected {
+            color:var(--text);
+        }
+        .filter-panel-item input[type="checkbox"] {
+            accent-color:var(--accent);
+            width:16px;
+            height:16px;
+            cursor:pointer;
+        }
+        .filter-panel-item .item-label {
+            flex:1;
+            min-width:0;
+            overflow:hidden;
+            text-overflow:ellipsis;
+            white-space:nowrap;
+        }
+        .schedule-filters .btn-reset-filters {
+            padding:7px 12px;
+            font-size:.82em;
+            border:1px solid var(--line);
+            border-radius:10px;
+            background:transparent;
+            color:var(--muted);
+            cursor:pointer;
+            transition:all .2s;
+            height:fit-content;
+        }
+        .schedule-filters .btn-reset-filters:hover {
+            color:var(--danger);
+            border-color:rgba(255,93,108,.45);
+            background:rgba(255,93,108,.08);
+        }
+        .schedule-filters .btn-reset-filters {
+            padding:7px 12px;
+            font-size:.82em;
+            border:1px solid var(--line);
+            border-radius:10px;
+            background:transparent;
+            color:var(--muted);
+            cursor:pointer;
+            transition:all .2s;
+        }
+        .schedule-filters .btn-reset-filters:hover {
+            color:var(--danger);
+            border-color:rgba(255,93,108,.45);
+            background:rgba(255,93,108,.08);
         }
 
         /* ===== Модальные окна ===== */
@@ -790,6 +970,8 @@
             .controls button { justify-content:center; }
             .tracker-controls { flex-direction:column; }
             .tracker-controls button { justify-content:center; }
+            .schedule-filters { flex-direction:column; align-items:stretch; }
+            .filter-trigger { min-width:100%; }
         }
 
         @media (prefers-reduced-motion:reduce) {
@@ -825,6 +1007,39 @@
         <button onclick="exportSchedule()">Экспорт расписания</button>
         <button onclick="document.getElementById('importScheduleFile').click()">Импорт расписания</button>
         <input type="file" id="importScheduleFile" style="display:none" accept=".json" onchange="importSchedule(event)">
+    </div>
+
+    <!-- Фильтры расписания -->
+    <div class="schedule-filters" id="scheduleFilters">
+        <div class="filter-group">
+            <label>Ученик:</label>
+            <div class="filter-trigger" onclick="toggleFilterPanel(this)" data-filter="student">
+                <span class="filter-label">Все</span><span class="arrow">▼</span>
+            </div>
+            <div class="filter-panel" id="filterPanelStudent"></div>
+        </div>
+        <div class="filter-group">
+            <label>Предмет:</label>
+            <div class="filter-trigger" onclick="toggleFilterPanel(this)" data-filter="subject">
+                <span class="filter-label">Все</span><span class="arrow">▼</span>
+            </div>
+            <div class="filter-panel" id="filterPanelSubject"></div>
+        </div>
+        <div class="filter-group">
+            <label>День:</label>
+            <div class="filter-trigger" onclick="toggleFilterPanel(this)" data-filter="day">
+                <span class="filter-label">Все</span><span class="arrow">▼</span>
+            </div>
+            <div class="filter-panel" id="filterPanelDay"></div>
+        </div>
+        <div class="filter-group">
+            <label>Время:</label>
+            <div class="filter-trigger" onclick="toggleFilterPanel(this)" data-filter="time">
+                <span class="filter-label">Все</span><span class="arrow">▼</span>
+            </div>
+            <div class="filter-panel" id="filterPanelTime"></div>
+        </div>
+        <button class="btn-reset-filters" onclick="resetScheduleFilters()">Сбросить</button>
     </div>
 
     <!-- Сетка расписания -->
@@ -873,7 +1088,11 @@
         <div class="tracker-header">
             <h2>Трекер задач</h2>
             <div class="tracker-controls">
+                <div class="mini-ring ring-completed" id="ringCompleted" role="img" aria-label="Выполнение задач">
+                    <div class="mini-ring-core"><b id="ringCompletedPct">0%</b><small>выполнено</small></div>
+                </div>
                 <button class="btn-primary" onclick="toggleTaskForm()">+ Добавить задачу</button>
+                <button onclick="saveTasksToStorage()">Сохранить задачи</button>
                 <button onclick="exportTasks()">Экспорт задач</button>
                 <button onclick="document.getElementById('importTasksFile').click()">Импорт задач</button>
                 <input type="file" id="importTasksFile" style="display:none" accept=".json" onchange="importTasks(event)">
@@ -915,21 +1134,6 @@
             <button class="active" onclick="filterTasks('all', this)">Все</button>
             <button onclick="filterTasks('active', this)">Активные</button>
             <button onclick="filterTasks('completed', this)">Готово</button>
-        </div>
-
-        <div class="stats-bar">
-            <div class="stat-item">
-                <span class="stat-number" id="totalTasks">0</span>
-                <span>всего</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-number" id="activeTasks">0</span>
-                <span>активных</span>
-            </div>
-            <div class="stat-item">
-                <span class="stat-number" id="completedTasks">0</span>
-                <span>выполнено</span>
-            </div>
         </div>
 
         <div class="task-list" id="taskList">
@@ -1148,7 +1352,7 @@
             }
         });
 
-        let totalSlots = 0;
+        let totalSlots = times.length * days.length;
         let filledSlots = 0;
 
         times.forEach(time => {
@@ -1163,7 +1367,6 @@
             grid.appendChild(timeCell);
 
             days.forEach(day => {
-                totalSlots++;
                 const slot = document.createElement('div');
                 slot.className = 'slot';
                 slot.dataset.time = time;
@@ -1178,6 +1381,7 @@
                 if (lesson) {
                     filledSlots++;
                     const lessonEl = createLessonElement(lesson, time, day);
+                    if (!isSlotVisible(time, day)) lessonEl.style.opacity = '0.18';
                     slot.appendChild(lessonEl);
                 }
 
@@ -1188,6 +1392,8 @@
         const pct = totalSlots > 0 ? Math.round(filledSlots / totalSlots * 100) : 0;
         document.getElementById('ringPct').textContent = pct + '%';
         document.getElementById('ring').style.setProperty('--p', pct);
+
+        populateFilterDropdowns();
     }
 
     function createLessonElement(lesson, time, day) {
@@ -1570,11 +1776,10 @@
     function updateStats() {
         const total = tasks.length;
         const completed = tasks.filter(t => t.completed).length;
-        const active = total - completed;
+        const pct = total > 0 ? Math.round(completed / total * 100) : 0;
 
-        document.getElementById('totalTasks').textContent = total;
-        document.getElementById('activeTasks').textContent = active;
-        document.getElementById('completedTasks').textContent = completed;
+        document.getElementById('ringCompletedPct').textContent = pct + '%';
+        document.getElementById('ringCompleted').style.setProperty('--p', pct);
     }
 
     function updateClearButton() {
@@ -1612,6 +1817,142 @@
                 renderTasks();
             }
         }
+    }
+
+    // ===== Schedule Filters =====
+    let scheduleFilterState = { student: [], subject: [], day: [], time: [] };
+
+    const filterMeta = {
+        student: { panelId: 'filterPanelStudent', items: [] },
+        subject: {
+            panelId: 'filterPanelSubject',
+            items: [
+                { value: 'english', label: 'Английский' },
+                { value: 'spanish', label: 'Испанский' },
+                { value: 'french', label: 'Французский' },
+                { value: 'german', label: 'Немецкий' },
+                { value: 'russian', label: 'Русский' },
+                { value: 'math', label: 'Математика' }
+            ]
+        },
+        day: {
+            panelId: 'filterPanelDay',
+            items: [
+                { value: 'mon', label: 'Понедельник' },
+                { value: 'tue', label: 'Вторник' },
+                { value: 'wed', label: 'Среда' },
+                { value: 'thu', label: 'Четверг' },
+                { value: 'fri', label: 'Пятница' },
+                { value: 'sat', label: 'Суббота' }
+            ]
+        },
+        time: { panelId: 'filterPanelTime', items: [] }
+    };
+
+    function buildFilterPanel(key) {
+        const meta = filterMeta[key];
+        const panel = document.getElementById(meta.panelId);
+        panel.innerHTML = '';
+        meta.items.forEach(item => {
+            const div = document.createElement('label');
+            div.className = 'filter-panel-item';
+            if (scheduleFilterState[key].includes(item.value)) div.classList.add('selected');
+            div.innerHTML = `<input type="checkbox" value="${item.value}" ${scheduleFilterState[key].includes(item.value) ? 'checked' : ''}><span class="item-label">${item.label}</span>`;
+            div.addEventListener('click', (e) => {
+                e.stopPropagation();
+                const cb = div.querySelector('input');
+                cb.checked = !cb.checked;
+                div.classList.toggle('selected', cb.checked);
+                if (cb.checked) scheduleFilterState[key].push(item.value);
+                else scheduleFilterState[key] = scheduleFilterState[key].filter(v => v !== item.value);
+                updateFilterTrigger(key);
+                renderSchedule();
+            });
+            panel.appendChild(div);
+        });
+    }
+
+    function populateFilterDropdowns() {
+        const studentSet = new Set();
+        Object.values(schedule).forEach(dayObj => {
+            Object.values(dayObj).forEach(lesson => {
+                if (lesson && lesson.name) studentSet.add(lesson.name);
+            });
+        });
+        filterMeta.student.items = [...studentSet].sort().map(name => ({ value: name, label: name }));
+
+        const timeSet = new Set(times);
+        filterMeta.time.items = [...timeSet].sort().map(t => ({ value: t, label: t }));
+
+        ['student', 'subject', 'day', 'time'].forEach(buildFilterPanel);
+    }
+
+    function updateFilterTrigger(key) {
+        const trigger = document.querySelector(`.filter-trigger[data-filter="${key}"]`);
+        const label = trigger.querySelector('.filter-label');
+        const selected = scheduleFilterState[key];
+        const existingBadge = trigger.querySelector('.count-badge');
+        if (existingBadge) existingBadge.remove();
+
+        if (selected.length === 0) {
+            label.textContent = 'Все';
+        } else {
+            label.textContent = selected.map(v => {
+                const item = filterMeta[key].items.find(i => i.value === v);
+                return item ? item.label : v;
+            }).join(', ');
+            const badge = document.createElement('span');
+            badge.className = 'count-badge';
+            badge.textContent = selected.length;
+            trigger.appendChild(badge);
+        }
+    }
+
+    function toggleFilterPanel(trigger) {
+        const panel = trigger.nextElementSibling;
+        const wasOpen = panel.classList.contains('open');
+        document.querySelectorAll('.filter-panel.open').forEach(p => p.classList.remove('open'));
+        document.querySelectorAll('.filter-trigger.open').forEach(t => t.classList.remove('open'));
+        if (!wasOpen) {
+            panel.classList.add('open');
+            trigger.classList.add('open');
+        }
+    }
+
+    document.addEventListener('click', (e) => {
+        if (!e.target.closest('.filter-group')) {
+            document.querySelectorAll('.filter-panel.open').forEach(p => p.classList.remove('open'));
+            document.querySelectorAll('.filter-trigger.open').forEach(t => t.classList.remove('open'));
+        }
+    });
+
+    function applyScheduleFilters() {
+        renderSchedule();
+    }
+
+    function resetScheduleFilters() {
+        scheduleFilterState = { student: [], subject: [], day: [], time: [] };
+        ['student', 'subject', 'day', 'time'].forEach(key => {
+            updateFilterTrigger(key);
+            buildFilterPanel(key);
+        });
+        renderSchedule();
+    }
+
+    function isSlotVisible(time, day) {
+        const { student, subject, day: days_, time: times_ } = scheduleFilterState;
+        if (days_.length && !days_.includes(day)) return false;
+        if (times_.length && !times_.includes(time)) return false;
+        const lesson = schedule[time] && schedule[time][day];
+        if (!lesson) return !student.length && !subject.length;
+        if (student.length && !student.some(s => lesson.name.includes(s))) return false;
+        if (subject.length && !subject.includes(lesson.subject)) return false;
+        return true;
+    }
+
+    function saveTasksToStorage() {
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+        showNotification('Задачи сохранены!');
     }
 
     // ===== Export/Import =====
