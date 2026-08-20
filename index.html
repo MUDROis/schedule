@@ -13,6 +13,14 @@
     <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/unbounded@5/800.css">
     <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
 
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <meta name="theme-color" content="#0a0d13">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="МУДРО">
+
     <style>
         :root {
             --bg0: #0a0d13;
@@ -1157,6 +1165,7 @@
         <button onclick="exportSchedule()"><i class="fa-solid fa-download"></i><span class="btn-text"> Экспорт</span></button>
         <button onclick="document.getElementById('importScheduleFile').click()"><i class="fa-solid fa-upload"></i><span class="btn-text"> Импорт</span></button>
         <input type="file" id="importScheduleFile" style="display:none" accept=".json" onchange="importSchedule(event)">
+        <button id="installBtn" style="display:none" onclick="installApp()"><i class="fa-solid fa-mobile-screen-button"></i><span class="btn-text"> Установить</span></button>
     </div>
 
     <!-- Фильтры расписания -->
