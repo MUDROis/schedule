@@ -3,1539 +3,1753 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
     <title>Расписание Интерактивная школа МУДРО</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/golos-text@5/400.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/golos-text@5/500.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/golos-text@5/600.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/unbounded@5/600.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/unbounded@5/800.css">
+
     <style>
-        * {
-            margin: 0;
-            padding: 0;
-            box-sizing: border-box;
-        }
+        :root {
+            --bg0: #0a0d13;
+            --bg1: #0f131c;
+            --surface: #141a26;
+            --surface2: #1a2231;
+            --line: rgba(255,255,255,.08);
+            --text: #eef1f8;
+            --muted: #8a93a8;
+            --faint: #5b6478;
+            --accent: #ffb454;
+            --accent-hi: #ffc873;
+            --accent-ink: #221403;
+            --danger: #ff5d6c;
+            --p-high: #ff5d6c;
+            --p-med: #ffb454;
+            --p-low: #4fd1c5;
 
+            --c-english: #007AFF;
+            --c-spanish: #FF9500;
+            --c-french: #5856D6;
+            --c-german: #FF2D55;
+            --c-russian: #5AC8FA;
+            --c-math: #34C759;
+        }
+        @property --p { syntax:'<number>'; inherits:false; initial-value:0; }
+
+        * { margin:0; padding:0; box-sizing:border-box; }
+        html { scroll-behavior:smooth; }
         body {
-            font-family: -apple-system, BlinkMacSystemFont, 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif;
-            background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
-            padding: 20px;
-            min-height: 100vh;
+            min-height:100vh;
+            background:var(--bg0);
+            color:var(--text);
+            font-family:'Golos Text',system-ui,-apple-system,'Segoe UI',sans-serif;
+            font-size:16px;
+            overflow-x:hidden;
+            padding:20px;
+        }
+        ::selection { background:rgba(255,180,84,.35); }
+        ::-webkit-scrollbar { width:10px; }
+        ::-webkit-scrollbar-track { background:var(--bg0); }
+        ::-webkit-scrollbar-thumb { background:#232c3d; border-radius:8px; border:2px solid var(--bg0); }
+        ::-webkit-scrollbar-thumb:hover { background:#2f3a50; }
+        :focus-visible { outline:2px solid var(--accent); outline-offset:2px; border-radius:6px; }
+        button { font-family:inherit; }
+
+        body::after {
+            content:''; position:fixed; inset:0; pointer-events:none; z-index:0;
+            background-image:
+                linear-gradient(rgba(255,255,255,.028) 1px,transparent 1px),
+                linear-gradient(90deg,rgba(255,255,255,.028) 1px,transparent 1px);
+            background-size:36px 36px;
+            -webkit-mask-image:radial-gradient(ellipse at 50% 0%,#000 25%,transparent 78%);
+                    mask-image:radial-gradient(ellipse at 50% 0%,#000 25%,transparent 78%);
+        }
+        .orb { position:fixed; border-radius:50%; filter:blur(95px); pointer-events:none; z-index:0; }
+        .orb-a { width:440px; height:440px; background:rgba(255,157,63,.14); top:-150px; right:-120px; animation:drift 16s ease-in-out infinite alternate; }
+        .orb-b { width:400px; height:400px; background:rgba(79,209,197,.10); bottom:-170px; left:-140px; animation:drift 21s ease-in-out infinite alternate-reverse; }
+        @keyframes drift { to { transform:translate3d(45px,35px,0) scale(1.09); } }
+
+        .app {
+            position:relative; z-index:1; max-width:1600px; margin:0 auto; padding:22px 0 64px;
         }
 
-        .container {
-            max-width: 1600px;
-            margin: 0 auto;
-            background: white;
-            border-radius: 16px;
-            padding: 30px;
-            box-shadow: 0 20px 60px rgba(0,0,0,0.3);
+        /* ===== Шапка ===== */
+        .head {
+            display:flex; align-items:center; gap:16px; margin-bottom:30px; flex-wrap:wrap;
         }
-
-        h1 {
-            text-align: center;
-            color: #333;
-            margin-bottom: 30px;
-            font-size: 2em;
-            font-weight: 600;
+        .logo {
+            flex:none; width:48px; height:48px; border-radius:14px; display:grid; place-items:center;
+            background:linear-gradient(135deg,var(--accent-hi),#ff9d3f);
+            box-shadow:0 10px 26px rgba(255,157,63,.35),inset 0 1px 0 rgba(255,255,255,.35);
+            transition:transform .3s cubic-bezier(.22,1,.36,1);
         }
-
-        h2 {
-            color: #333;
-            font-size: 1.3em;
-            font-weight: 600;
-            margin-bottom: 15px;
-            display: flex;
-            align-items: center;
-            gap: 10px;
+        .head:hover .logo { transform:rotate(-6deg) scale(1.05); }
+        .head-text { flex:1; min-width:0; }
+        .head-text h1 {
+            font-family:'Unbounded','Golos Text',sans-serif; font-weight:800;
+            font-size:clamp(1.2rem,4vw,1.7rem); line-height:1.15; letter-spacing:-.01em;
         }
+        .head-sub { margin-top:5px; font-size:.85rem; color:var(--muted); }
+        .head-sub b { color:var(--accent); font-weight:500; }
 
+        .ring {
+            --p:0; flex:none; width:86px; height:86px; border-radius:50%;
+            background:conic-gradient(var(--accent) calc(var(--p)*1%),rgba(255,255,255,.07) 0);
+            display:grid; place-items:center;
+            transition:--p .7s cubic-bezier(.22,1,.36,1);
+        }
+        .ring-core {
+            width:68px; height:68px; border-radius:50%; background:var(--bg1);
+            display:flex; flex-direction:column; align-items:center; justify-content:center;
+            box-shadow:inset 0 0 0 1px var(--line);
+        }
+        .ring-core b { font-family:'Unbounded',sans-serif; font-weight:600; font-size:.95rem; line-height:1; }
+        .ring-core small { font-size:.56rem; color:var(--muted); letter-spacing:.1em; text-transform:uppercase; margin-top:4px; }
+
+        /* ===== Кнопки управления ===== */
         .controls {
-            display: flex;
-            gap: 10px;
-            margin-bottom: 30px;
-            flex-wrap: wrap;
+            display:flex; gap:10px; margin-bottom:30px; flex-wrap:wrap;
         }
 
         button {
-            padding: 8px 16px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 14px;
-            cursor: pointer;
-            transition: all 0.2s;
-            font-weight: 500;
-            background: white;
-            color: #333;
+            padding:8px 16px;
+            border:1px solid var(--line);
+            border-radius:10px;
+            font-size:14px;
+            cursor:pointer;
+            transition:all .2s;
+            font-weight:500;
+            background:transparent;
+            color:var(--muted);
         }
-
         button:hover {
-            background: #f5f5f5;
-            transform: translateY(-1px);
-            box-shadow: 0 2px 8px rgba(0,0,0,0.1);
+            color:var(--text);
+            border-color:rgba(255,255,255,.18);
+            background:rgba(255,255,255,.04);
+            transform:translateY(-1px);
         }
-
-        button:active {
-            transform: translateY(0);
-        }
+        button:active { transform:translateY(0) scale(.97); }
 
         .btn-primary {
-            background: #007AFF;
-            color: white;
-            border-color: #007AFF;
+            background:var(--accent);
+            color:var(--accent-ink);
+            border-color:var(--accent);
+            font-weight:600;
+            box-shadow:0 8px 20px rgba(255,180,84,.25);
         }
-
         .btn-primary:hover {
-            background: #0056b3;
-            border-color: #0056b3;
+            background:var(--accent-hi);
+            color:var(--accent-ink);
+            border-color:var(--accent-hi);
+            box-shadow:0 12px 26px rgba(255,180,84,.38);
+            transform:translateY(-2px);
         }
 
         .btn-danger {
-            background: #FF3B30;
-            color: white;
-            border-color: #FF3B30;
+            background:transparent;
+            color:var(--muted);
+            border-color:var(--line);
         }
-
         .btn-danger:hover {
-            background: #d63028;
-            border-color: #d63028;
+            color:var(--danger);
+            border-color:rgba(255,93,108,.45);
+            background:rgba(255,93,108,.08);
         }
 
         .btn-success {
-            background: #34C759;
-            color: white;
-            border-color: #34C759;
+            background:transparent;
+            color:var(--muted);
+            border-color:var(--line);
         }
-
         .btn-success:hover {
-            background: #2da84a;
-            border-color: #2da84a;
+            color:var(--p-low);
+            border-color:rgba(79,209,197,.45);
+            background:rgba(79,209,197,.08);
         }
 
+        /* ===== Сетка расписания ===== */
         .schedule-container {
-            overflow-x: auto;
-            margin-bottom: 40px;
+            overflow-x:auto;
+            margin-bottom:30px;
         }
-
         .schedule-grid {
-            display: grid;
-            grid-template-columns: 150px repeat(6, 1fr);
-            gap: 8px;
-            min-width: 900px;
+            display:grid;
+            grid-template-columns:140px repeat(6,1fr);
+            gap:8px;
+            min-width:900px;
         }
 
         .header-cell {
-            background: #f5f5f7;
-            padding: 12px;
-            text-align: center;
-            font-weight: 600;
-            border-radius: 8px;
-            font-size: 0.95em;
-            border: 1px solid #e0e0e0;
+            background:var(--surface);
+            padding:12px;
+            text-align:center;
+            font-weight:600;
+            border-radius:10px;
+            font-size:.9em;
+            border:1px solid var(--line);
+            color:var(--text);
+        }
+        .header-cell.today {
+            color:var(--accent);
+            border-color:rgba(255,180,84,.3);
+            background:rgba(255,180,84,.08);
         }
 
         .time-cell {
-            background: #f5f5f7;
-            padding: 10px;
-            text-align: center;
-            font-weight: 600;
-            border-radius: 8px;
-            display: flex;
-            flex-direction: column;
-            align-items: center;
-            justify-content: center;
-            gap: 4px;
-            font-size: 0.9em;
-            border: 1px solid #e0e0e0;
+            background:var(--surface);
+            padding:10px;
+            text-align:center;
+            font-weight:600;
+            border-radius:10px;
+            display:flex;
+            flex-direction:column;
+            align-items:center;
+            justify-content:center;
+            gap:4px;
+            font-size:.9em;
+            border:1px solid var(--line);
         }
-
         .time-range {
-            font-size: 0.8em;
-            color: #666;
-            font-weight: 400;
+            font-size:.78em;
+            color:var(--muted);
+            font-weight:400;
+        }
+        .time-cell button {
+            margin-top:6px;
+            font-size:11px;
+            padding:4px 8px;
+            border-radius:8px;
         }
 
         .slot {
-            min-height: 100px;
-            padding: 8px;
-            border-radius: 8px;
-            border: 2px dashed #e0e0e0;
-            transition: all 0.2s;
-            position: relative;
-            background: #fafafa;
+            min-height:100px;
+            padding:8px;
+            border-radius:10px;
+            border:1.5px dashed rgba(255,255,255,.08);
+            transition:all .2s;
+            position:relative;
+            background:rgba(255,255,255,.015);
         }
-
         .slot.drag-over {
-            background: #e3f2fd;
-            border-color: #007AFF;
+            background:rgba(255,180,84,.06);
+            border-color:var(--accent);
         }
 
+        /* ===== Карточки уроков ===== */
         .lesson {
-            padding: 10px;
-            border-radius: 8px;
-            background: white;
-            font-weight: 500;
-            cursor: move;
-            transition: all 0.2s;
-            position: relative;
-            margin-bottom: 6px;
-            border-width: 3px;
-            border-style: solid;
-            box-shadow: 0 2px 4px rgba(0,0,0,0.05);
+            padding:12px;
+            border-radius:12px;
+            background:var(--surface2);
+            font-weight:500;
+            cursor:move;
+            transition:all .2s;
+            position:relative;
+            margin-bottom:6px;
+            border-left:4px solid transparent;
+            box-shadow:0 2px 8px rgba(0,0,0,.2);
         }
-
         .lesson:hover {
-            transform: translateY(-2px);
-            box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+            transform:translateY(-2px) translateX(3px);
+            box-shadow:0 6px 18px rgba(0,0,0,.35);
+            background:#1e2738;
         }
-
         .lesson.dragging {
-            opacity: 0.5;
+            opacity:.45;
+            border-style:dashed;
+            cursor:grabbing;
         }
 
-        /* Цветовые границы для предметов */
-        .lesson-english { border-color: #007AFF; }
-        .lesson-spanish { border-color: #FF9500; }
-        .lesson-french { border-color: #5856D6; }
-        .lesson-german { border-color: #FF2D55; }
-        .lesson-russian { border-color: #5AC8FA; }
-        .lesson-math { border-color: #34C759; }
+        .lesson-english { border-left-color:var(--c-english); }
+        .lesson-spanish { border-left-color:var(--c-spanish); }
+        .lesson-french { border-left-color:var(--c-french); }
+        .lesson-german { border-left-color:var(--c-german); }
+        .lesson-russian { border-left-color:var(--c-russian); }
+        .lesson-math { border-left-color:var(--c-math); }
+
+        .lesson-type {
+            position:absolute;
+            top:8px;
+            right:8px;
+            font-size:.72em;
+            font-weight:700;
+            padding:2px 8px;
+            border-radius:6px;
+            background:rgba(255,255,255,.07);
+            color:var(--muted);
+            letter-spacing:.05em;
+        }
 
         .lesson-time {
-            font-size: 0.75em;
-            color: #888;
-            margin-bottom: 6px;
-            font-weight: 600;
+            font-size:.73em;
+            color:var(--muted);
+            margin-bottom:6px;
+            font-weight:500;
+            display:flex;
+            align-items:center;
+            gap:5px;
         }
 
         .lesson-name {
-            font-size: 0.95em;
-            margin-bottom: 4px;
-            font-weight: 600;
-            color: #333;
+            font-size:.95em;
+            margin-bottom:3px;
+            font-weight:600;
+            color:var(--text);
         }
 
         .lesson-subject {
-            font-size: 0.85em;
-            color: #666;
-            margin-bottom: 4px;
-        }
-
-        .lesson-type {
-            position: absolute;
-            top: 6px;
-            right: 6px;
-            font-size: 0.75em;
-            font-weight: 700;
-            padding: 2px 6px;
-            border-radius: 4px;
-            background: #f5f5f7;
-            color: #666;
+            font-size:.83em;
+            color:var(--faint);
         }
 
         .lesson-actions {
-            position: absolute;
-            bottom: 6px;
-            right: 6px;
-            display: flex;
-            gap: 4px;
+            position:absolute;
+            bottom:8px;
+            right:8px;
+            display:flex;
+            gap:4px;
+            opacity:0;
+            transition:opacity .2s;
+        }
+        .lesson:hover .lesson-actions {
+            opacity:1;
         }
 
         .lesson-actions button {
-            padding: 4px 8px;
-            font-size: 12px;
-            background: white;
-            border: 1px solid #ddd;
-            border-radius: 6px;
-            cursor: pointer;
-            transition: all 0.2s;
+            padding:4px 8px;
+            font-size:12px;
+            background:var(--surface);
+            border:1px solid var(--line);
+            border-radius:8px;
+            color:var(--muted);
+            cursor:pointer;
+            transition:all .2s;
         }
-
         .lesson-actions button:hover {
-            background: #f5f5f5;
-            transform: scale(1.1);
+            background:var(--surface2);
+            transform:scale(1.1);
         }
-
         .lesson-actions .btn-delete-icon {
-            color: #FF3B30;
+            color:var(--danger);
+        }
+        .lesson-actions .btn-delete-icon:hover {
+            background:rgba(255,93,108,.12);
+            border-color:rgba(255,93,108,.35);
         }
 
+        /* ===== Легенда ===== */
         .legend {
-            display: flex;
-            gap: 15px;
-            justify-content: center;
-            flex-wrap: wrap;
-            margin: 20px 0;
-            padding: 15px;
-            background: #f5f5f7;
-            border-radius: 12px;
+            display:flex;
+            gap:15px;
+            justify-content:center;
+            flex-wrap:wrap;
+            margin:20px 0;
+            padding:14px;
+            background:var(--surface);
+            border:1px solid var(--line);
+            border-radius:12px;
         }
-
         .legend-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-            font-size: 0.9em;
+            display:flex;
+            align-items:center;
+            gap:8px;
+            font-size:.88em;
+            color:var(--muted);
         }
-
         .legend-color {
-            width: 20px;
-            height: 20px;
-            border-radius: 6px;
-            border-width: 3px;
-            border-style: solid;
-            background: white;
+            width:20px;
+            height:20px;
+            border-radius:6px;
+            border-left:4px solid;
+            background:var(--surface2);
         }
 
-        /* Task Tracker Styles */
+        /* ===== Трекер задач ===== */
         .tracker-section {
-            border-top: 2px solid #e0e0e0;
-            padding-top: 30px;
-            margin-top: 30px;
+            border-top:1px solid var(--line);
+            padding-top:30px;
+            margin-top:30px;
         }
-
         .tracker-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-            flex-wrap: wrap;
-            gap: 15px;
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            margin-bottom:20px;
+            flex-wrap:wrap;
+            gap:15px;
         }
-
+        .tracker-header h2 {
+            font-family:'Unbounded','Golos Text',sans-serif;
+            font-weight:600;
+            font-size:clamp(1rem,3vw,1.25rem);
+            color:var(--text);
+            display:flex;
+            align-items:center;
+            gap:10px;
+        }
         .tracker-controls {
-            display: flex;
-            gap: 10px;
-            align-items: center;
-            flex-wrap: wrap;
+            display:flex;
+            gap:10px;
+            align-items:center;
+            flex-wrap:wrap;
         }
 
         .task-input-form {
-            background: #f5f5f7;
-            padding: 20px;
-            border-radius: 12px;
-            margin-bottom: 20px;
-            display: none;
+            background:var(--surface);
+            border:1px solid var(--line);
+            padding:20px;
+            border-radius:14px;
+            margin-bottom:20px;
+            display:none;
+            box-shadow:0 14px 34px rgba(0,0,0,.35);
         }
-
         .task-input-form.active {
-            display: block;
+            display:block;
+            animation:popIn .4s cubic-bezier(.22,1,.36,1);
         }
 
         .form-row {
-            display: grid;
-            grid-template-columns: 1fr 1fr;
-            gap: 15px;
-            margin-bottom: 15px;
+            display:grid;
+            grid-template-columns:1fr 1fr;
+            gap:15px;
+            margin-bottom:15px;
         }
-
         .form-group {
-            display: flex;
-            flex-direction: column;
-            gap: 6px;
+            display:flex;
+            flex-direction:column;
+            gap:6px;
         }
-
         .form-group label {
-            font-size: 0.85em;
-            font-weight: 600;
-            color: #555;
+            font-size:.83em;
+            font-weight:600;
+            color:var(--muted);
         }
-
         .form-group input,
         .form-group select,
         .form-group textarea {
-            padding: 10px;
-            border: 1px solid #ddd;
-            border-radius: 8px;
-            font-size: 14px;
-            font-family: inherit;
+            padding:10px 14px;
+            border:1px solid var(--line);
+            border-radius:10px;
+            font-size:14px;
+            font-family:inherit;
+            background:var(--surface2);
+            color:var(--text);
+            transition:border-color .2s,box-shadow .2s;
         }
-
         .form-group input:focus,
         .form-group select:focus,
         .form-group textarea:focus {
-            outline: none;
-            border-color: #007AFF;
+            outline:none;
+            border-color:var(--accent);
+            box-shadow:0 0 0 3px rgba(255,180,84,.15);
         }
-
-        .task-list {
-            display: flex;
-            flex-direction: column;
-            gap: 8px;
+        .form-group select {
+            color-scheme:dark;
+            cursor:pointer;
         }
-
-        .task-item {
-            display: flex;
-            align-items: flex-start;
-            gap: 12px;
-            padding: 14px;
-            background: white;
-            border: 1px solid #e0e0e0;
-            border-radius: 10px;
-            cursor: pointer;
-            transition: all 0.2s;
-        }
-
-        .task-item:hover {
-            box-shadow: 0 2px 8px rgba(0,0,0,0.08);
-            transform: translateY(-1px);
-        }
-
-        .task-item.completed {
-            opacity: 0.6;
-            background: #f5f5f7;
-        }
-
-        .task-item.completed .task-title {
-            text-decoration: line-through;
-        }
-
-        .task-checkbox {
-            margin-top: 3px;
-            width: 18px;
-            height: 18px;
-            cursor: pointer;
-        }
-
-        .task-content {
-            flex: 1;
-        }
-
-        .task-title {
-            font-weight: 600;
-            margin-bottom: 6px;
-            font-size: 0.95em;
-        }
-
-        .task-meta {
-            display: flex;
-            gap: 12px;
-            font-size: 0.8em;
-            color: #666;
-            flex-wrap: wrap;
-        }
-
-        .task-priority {
-            padding: 3px 8px;
-            border-radius: 6px;
-            font-weight: 500;
-            font-size: 0.85em;
-        }
-
-        .priority-low {
-            background: #E0F7FA;
-            color: #00838F;
-        }
-
-        .priority-medium {
-            background: #FFF3E0;
-            color: #EF6C00;
-        }
-
-        .priority-high {
-            background: #FFEBEE;
-            color: #C62828;
-        }
-
-        .task-deadline {
-            display: flex;
-            align-items: center;
-            gap: 4px;
-        }
-
-        .task-actions {
-            display: flex;
-            gap: 6px;
-        }
-
-        .task-actions button {
-            padding: 6px 10px;
-            font-size: 12px;
-        }
-
-        .filter-buttons {
-            display: flex;
-            gap: 8px;
-            margin-bottom: 15px;
-        }
-
-        .filter-buttons button.active {
-            background: #007AFF;
-            color: white;
-            border-color: #007AFF;
-        }
-
-        .stats-bar {
-            display: flex;
-            gap: 20px;
-            padding: 12px 20px;
-            background: #f5f5f7;
-            border-radius: 10px;
-            margin-bottom: 15px;
-            font-size: 0.9em;
-        }
-
-        .stat-item {
-            display: flex;
-            align-items: center;
-            gap: 8px;
-        }
-
-        .stat-number {
-            font-weight: 700;
-            font-size: 1.1em;
-        }
-
-        /* Modal Styles */
-        .modal {
-            display: none;
-            position: fixed;
-            z-index: 1000;
-            left: 0;
-            top: 0;
-            width: 100%;
-            height: 100%;
-            background-color: rgba(0,0,0,0.5);
-            animation: fadeIn 0.3s;
-        }
-
-        .modal-content {
-            background-color: white;
-            margin: 5% auto;
-            padding: 30px;
-            border-radius: 15px;
-            width: 90%;
-            max-width: 550px;
-            box-shadow: 0 10px 40px rgba(0,0,0,0.3);
-            animation: slideDown 0.3s;
-        }
-
-        @keyframes fadeIn {
-            from { opacity: 0; }
-            to { opacity: 1; }
-        }
-
-        @keyframes slideDown {
-            from { transform: translateY(-50px); opacity: 0; }
-            to { transform: translateY(0); opacity: 1; }
-        }
-
-        .modal-header {
-            display: flex;
-            justify-content: space-between;
-            align-items: center;
-            margin-bottom: 20px;
-        }
-
-        .modal-header h2 {
-            margin: 0;
-        }
-
-        .close {
-            color: #aaa;
-            font-size: 28px;
-            font-weight: bold;
-            cursor: pointer;
-            transition: color 0.3s;
-        }
-
-        .close:hover {
-            color: #000;
+        .form-group input[type="date"] {
+            color-scheme:dark;
         }
 
         .form-actions {
-            display: flex;
-            gap: 10px;
-            justify-content: flex-end;
-            margin-top: 20px;
+            display:flex;
+            gap:10px;
+            justify-content:flex-end;
+            margin-top:20px;
         }
 
-        .bottom-controls {
-            display: flex;
-            justify-content: center;
-            gap: 15px;
-            margin-top: 30px;
-            padding-top: 20px;
-            border-top: 2px solid #e0e0e0;
+        /* ===== Фильтры задач ===== */
+        .filter-buttons {
+            display:flex;
+            gap:2px;
+            background:var(--surface);
+            border:1px solid var(--line);
+            padding:4px;
+            border-radius:999px;
+            margin-bottom:15px;
+            width:fit-content;
+        }
+        .filter-buttons button {
+            display:flex;
+            align-items:center;
+            gap:7px;
+            border:none;
+            background:transparent;
+            cursor:pointer;
+            color:var(--muted);
+            font-size:.85rem;
+            font-weight:500;
+            padding:7px 14px;
+            border-radius:999px;
+            transition:color .2s,background .25s,box-shadow .25s;
+        }
+        .filter-buttons button:hover {
+            color:var(--text);
+        }
+        .filter-buttons button.active {
+            background:var(--accent);
+            color:var(--accent-ink);
+            box-shadow:0 4px 14px rgba(255,180,84,.3);
         }
 
-        .btn-reset-icon {
-            background: #FF3B30;
-            color: white;
-            border: none;
-            border-radius: 50%;
-            width: 50px;
-            height: 50px;
-            cursor: pointer;
-            font-size: 24px;
-            transition: all 0.3s;
-            display: flex;
-            align-items: center;
-            justify-content: center;
+        .btn-ghost {
+            display:inline-flex;
+            align-items:center;
+            gap:7px;
+            background:transparent;
+            cursor:pointer;
+            border:1px solid var(--line);
+            color:var(--muted);
+            font-size:.82rem;
+            padding:8px 14px;
+            border-radius:10px;
+            transition:color .2s,border-color .2s,background .2s,transform .15s;
+        }
+        .btn-ghost:hover {
+            color:var(--danger);
+            border-color:rgba(255,93,108,.45);
+            background:rgba(255,93,108,.08);
+            transform:translateY(-1px);
         }
 
-        .btn-reset-icon:hover {
-            background: #d63028;
-            transform: scale(1.1) rotate(15deg);
+        /* ===== Список задач ===== */
+        .task-list {
+            display:flex;
+            flex-direction:column;
+            gap:8px;
         }
 
-        .empty-state {
-            text-align: center;
-            padding: 40px;
-            color: #888;
-            font-size: 0.95em;
+        .task-item {
+            position:relative;
+            display:flex;
+            align-items:center;
+            gap:12px;
+            padding:13px 14px 13px 20px;
+            background:var(--surface);
+            border:1px solid var(--line);
+            border-radius:14px;
+            cursor:pointer;
+            transition:all .2s;
+        }
+        .task-item::before {
+            content:'';
+            position:absolute;
+            left:0;
+            top:0;
+            bottom:0;
+            width:4px;
+            background:var(--pc,transparent);
+            border-radius:14px 0 0 14px;
+        }
+        .task-item.p-high { --pc:var(--p-high); }
+        .task-item.p-med { --pc:var(--p-med); }
+        .task-item.p-low { --pc:var(--p-low); }
+
+        .task-item:hover {
+            border-color:rgba(255,255,255,.16);
+            background:#171f2e;
+            transform:translateX(3px);
+        }
+        .task-item.completed {
+            opacity:.62;
+        }
+        .task-item.completed .task-title {
+            text-decoration:line-through;
+            color:var(--muted);
         }
 
-        .empty-state-icon {
-            font-size: 3em;
-            margin-bottom: 15px;
-            opacity: 0.5;
+        .task-checkbox {
+            flex:none;
+            width:22px;
+            height:22px;
+            border-radius:7px;
+            cursor:pointer;
+            accent-color:var(--accent);
         }
 
-        @media (max-width: 768px) {
-            .schedule-grid {
-                grid-template-columns: 120px repeat(6, 1fr);
-                gap: 6px;
-                min-width: 700px;
-            }
+        .task-content {
+            flex:1;
+            min-width:0;
+        }
+        .task-title {
+            font-weight:600;
+            font-size:.95em;
+            margin-bottom:4px;
+            color:var(--text);
+        }
+        .task-meta {
+            display:flex;
+            gap:10px;
+            font-size:.78em;
+            color:var(--faint);
+            flex-wrap:wrap;
+            align-items:center;
+        }
+        .task-priority {
+            padding:2px 8px;
+            border-radius:6px;
+            font-weight:500;
+            font-size:.88em;
+        }
+        .priority-low { background:rgba(79,209,197,.12); color:var(--p-low); }
+        .priority-medium { background:rgba(255,180,84,.12); color:var(--p-med); }
+        .priority-high { background:rgba(255,93,108,.12); color:var(--p-high); }
 
-            .form-row {
-                grid-template-columns: 1fr;
-            }
-
-            h1 {
-                font-size: 1.5em;
-            }
+        .task-deadline {
+            display:flex;
+            align-items:center;
+            gap:4px;
         }
 
+        .task-actions {
+            display:flex;
+            gap:4px;
+            opacity:0;
+            transition:opacity .2s;
+        }
+        .task-item:hover .task-actions {
+            opacity:1;
+        }
+        .task-actions button {
+            padding:5px 8px;
+            font-size:12px;
+            border:1px solid var(--line);
+            border-radius:8px;
+            color:var(--muted);
+        }
+        .task-actions button:hover {
+            color:var(--text);
+            background:var(--surface2);
+        }
+        .task-actions .btn-delete-icon:hover {
+            color:var(--danger);
+            background:rgba(255,93,108,.1);
+        }
+
+        /* ===== Статистика задач ===== */
+        .stats-bar {
+            display:flex;
+            gap:20px;
+            padding:12px 20px;
+            background:var(--surface);
+            border:1px solid var(--line);
+            border-radius:10px;
+            margin-bottom:15px;
+            font-size:.88em;
+            color:var(--muted);
+        }
+        .stat-item {
+            display:flex;
+            align-items:center;
+            gap:8px;
+        }
+        .stat-number {
+            font-weight:700;
+            font-size:1.1em;
+            color:var(--accent);
+        }
+
+        /* ===== Модальные окна ===== */
+        .modal {
+            display:none;
+            position:fixed;
+            z-index:1000;
+            left:0; top:0;
+            width:100%; height:100%;
+            background:rgba(0,0,0,.6);
+            backdrop-filter:blur(6px);
+            animation:fadeIn .25s;
+        }
+        .modal-content {
+            background:var(--surface);
+            border:1px solid var(--line);
+            margin:8% auto;
+            padding:30px;
+            border-radius:18px;
+            width:90%;
+            max-width:550px;
+            box-shadow:0 20px 60px rgba(0,0,0,.5);
+            animation:slideDown .3s;
+        }
+        @keyframes fadeIn { from { opacity:0; } to { opacity:1; } }
+        @keyframes slideDown { from { transform:translateY(-50px); opacity:0; } to { transform:translateY(0); opacity:1; } }
+
+        .modal-header {
+            display:flex;
+            justify-content:space-between;
+            align-items:center;
+            margin-bottom:20px;
+        }
+        .modal-header h2 {
+            font-family:'Unbounded','Golos Text',sans-serif;
+            font-weight:600;
+            font-size:1.1rem;
+            color:var(--text);
+        }
+        .close {
+            color:var(--faint);
+            font-size:28px;
+            font-weight:bold;
+            cursor:pointer;
+            transition:color .2s;
+            line-height:1;
+        }
+        .close:hover { color:var(--text); }
+
+        /* ===== Уведомления ===== */
         .notification {
-            position: fixed;
-            top: 20px;
-            right: 20px;
-            padding: 15px 25px;
-            background: #34C759;
-            color: white;
-            border-radius: 8px;
-            box-shadow: 0 4px 12px rgba(0,0,0,0.3);
-            display: none;
-            animation: slideIn 0.3s ease-out;
-            z-index: 1000;
+            position:fixed;
+            top:20px;
+            right:20px;
+            padding:15px 25px;
+            background:var(--surface);
+            border:1px solid var(--line);
+            color:var(--text);
+            border-radius:12px;
+            box-shadow:0 14px 34px rgba(0,0,0,.4);
+            display:none;
+            animation:slideIn .3s ease-out;
+            z-index:1000;
+            font-weight:500;
         }
-
         @keyframes slideIn {
-            from {
-                transform: translateX(400px);
-                opacity: 0;
-            }
-            to {
-                transform: translateX(0);
-                opacity: 1;
-            }
+            from { transform:translateX(400px); opacity:0; }
+            to { transform:translateX(0); opacity:1; }
+        }
+        .notification.show { display:block; }
+
+        /* ===== Нижние кнопки ===== */
+        .bottom-controls {
+            display:flex;
+            justify-content:center;
+            gap:15px;
+            margin-top:30px;
+            padding-top:20px;
+            border-top:1px solid var(--line);
+        }
+        .btn-reset-icon {
+            background:transparent;
+            color:var(--muted);
+            border:1px solid var(--line);
+            border-radius:50%;
+            width:50px;
+            height:50px;
+            cursor:pointer;
+            font-size:20px;
+            transition:all .3s;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+        }
+        .btn-reset-icon:hover {
+            color:var(--danger);
+            border-color:rgba(255,93,108,.45);
+            background:rgba(255,93,108,.08);
+            transform:scale(1.1) rotate(15deg);
         }
 
-        .notification.show {
-            display: block;
+        /* ===== Пустое состояние ===== */
+        .empty-state {
+            text-align:center;
+            padding:40px 20px;
+            color:var(--muted);
+            border:1.5px dashed rgba(255,255,255,.12);
+            border-radius:14px;
+            background:rgba(255,255,255,.015);
+        }
+        .empty-state-icon {
+            font-size:2.5em;
+            margin-bottom:15px;
+            opacity:.5;
+        }
+        .empty-state div:last-child {
+            margin-top:8px;
+            font-size:.85em;
+            color:var(--faint);
+        }
+
+        @keyframes popIn {
+            from { opacity:0; transform:translateY(12px) scale(.98); }
+            to { opacity:1; transform:none; }
+        }
+
+        @media (max-width:768px) {
+            .schedule-grid {
+                grid-template-columns:110px repeat(6,1fr);
+                gap:6px;
+                min-width:700px;
+            }
+            .form-row { grid-template-columns:1fr; }
+            .head-text h1 { font-size:1.2em; }
+            .ring { width:74px; height:74px; }
+            .ring-core { width:58px; height:58px; }
+            .ring-core b { font-size:.82rem; }
+            .controls { flex-direction:column; }
+            .controls button { justify-content:center; }
+            .tracker-controls { flex-direction:column; }
+            .tracker-controls button { justify-content:center; }
+        }
+
+        @media (prefers-reduced-motion:reduce) {
+            *,*::before,*::after { animation-duration:.01ms!important; animation-iteration-count:1!important; transition-duration:.01ms!important; }
         }
     </style>
 </head>
 <body>
-    <div class="container">
-        <h1>📅 Расписание Интерактивная школа МУДРО</h1>
 
-        <div class="controls">
-            <button class="btn-primary" onclick="openAddTimeModal()">➕ Добавить время</button>
-            <button onclick="saveSchedule()">💾 Сохранить расписание</button>
-            <button onclick="exportSchedule()">📤 Экспорт расписания</button>
-            <button onclick="document.getElementById('importScheduleFile').click()">📥 Импорт расписания</button>
-            <input type="file" id="importScheduleFile" style="display: none" accept=".json" onchange="importSchedule(event)">
+<div class="orb orb-a" aria-hidden="true"></div>
+<div class="orb orb-b" aria-hidden="true"></div>
+
+<main class="app">
+
+    <!-- Шапка -->
+    <header class="head">
+        <div class="logo" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#221403" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
         </div>
-
-        <div class="schedule-container">
-            <div class="schedule-grid" id="scheduleGrid">
-                <div class="header-cell">Время</div>
-                <div class="header-cell">Понедельник</div>
-                <div class="header-cell">Вторник</div>
-                <div class="header-cell">Среда</div>
-                <div class="header-cell">Четверг</div>
-                <div class="header-cell">Пятница</div>
-                <div class="header-cell">Суббота</div>
-            </div>
+        <div class="head-text">
+            <h1>Расписание МУДРО</h1>
+            <p class="head-sub"><b id="greeting"></b> · <span id="currentDate"></span></p>
         </div>
-
-        <div class="legend">
-            <div class="legend-item">
-                <div class="legend-color lesson-english"></div>
-                <span>Английский</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color lesson-spanish"></div>
-                <span>Испанский</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color lesson-french"></div>
-                <span>Французский</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color lesson-german"></div>
-                <span>Немецкий</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color lesson-russian"></div>
-                <span>Русский</span>
-            </div>
-            <div class="legend-item">
-                <div class="legend-color lesson-math"></div>
-                <span>Математика</span>
-            </div>
+        <div class="ring" id="ring" role="img" aria-label="Заполненность расписания">
+            <div class="ring-core"><b id="ringPct">0%</b><small>занято</small></div>
         </div>
+    </header>
 
-        <!-- Task Tracker Section -->
-        <div class="tracker-section">
-            <div class="tracker-header">
-                <h2>✓ Трекер задач</h2>
-                <div class="tracker-controls">
-                    <button class="btn-primary" onclick="toggleTaskForm()">+ Добавить задачу</button>
-                    <button onclick="exportTasks()">📤 Экспорт</button>
-                    <button onclick="document.getElementById('importTasksFile').click()">📥 Импорт</button>
-                    <input type="file" id="importTasksFile" style="display: none" accept=".json" onchange="importTasks(event)">
-                </div>
-            </div>
+    <!-- Кнопки управления -->
+    <div class="controls">
+        <button class="btn-primary" onclick="openAddTimeModal()">+ Добавить время</button>
+        <button onclick="saveSchedule()">Сохранить расписание</button>
+        <button onclick="exportSchedule()">Экспорт расписания</button>
+        <button onclick="document.getElementById('importScheduleFile').click()">Импорт расписания</button>
+        <input type="file" id="importScheduleFile" style="display:none" accept=".json" onchange="importSchedule(event)">
+    </div>
 
-            <!-- Task Input Form -->
-            <div class="task-input-form" id="taskForm">
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Название задачи *</label>
-                        <input type="text" id="taskTitle" placeholder="Что нужно сделать?" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Приоритет</label>
-                        <select id="taskPriority">
-                            <option value="low">Низкий</option>
-                            <option value="medium" selected>Средний</option>
-                            <option value="high">Высокий</option>
-                        </select>
-                    </div>
-                </div>
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Срок выполнения</label>
-                        <input type="date" id="taskDeadline">
-                    </div>
-                    <div class="form-group">
-                        <label>Описание</label>
-                        <input type="text" id="taskDescription" placeholder="Дополнительная информация">
-                    </div>
-                </div>
-                <div class="form-actions">
-                    <button onclick="toggleTaskForm()">Отмена</button>
-                    <button class="btn-success" onclick="saveTask()">Сохранить</button>
-                </div>
-            </div>
-
-            <!-- Filter Buttons -->
-            <div class="filter-buttons">
-                <button class="active" onclick="filterTasks('all')">Все</button>
-                <button onclick="filterTasks('active')">Активные</button>
-                <button onclick="filterTasks('completed')">Готово</button>
-                <button class="btn-danger" onclick="clearCompleted()">Очистить выполненные</button>
-            </div>
-
-            <!-- Stats Bar -->
-            <div class="stats-bar">
-                <div class="stat-item">
-                    <span class="stat-number" id="totalTasks">0</span>
-                    <span>всего</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-number" id="activeTasks">0</span>
-                    <span>активных</span>
-                </div>
-                <div class="stat-item">
-                    <span class="stat-number" id="completedTasks">0</span>
-                    <span>выполнено</span>
-                </div>
-            </div>
-
-            <!-- Task List -->
-            <div class="task-list" id="taskList">
-                <div class="empty-state">
-                    <div class="empty-state-icon">📋</div>
-                    <div>Задач пока нет</div>
-                    <div style="margin-top: 8px; font-size: 0.85em; color: #999;">Двойной клик — редактировать · перетаскивание — менять порядок</div>
-                </div>
-            </div>
-        </div>
-
-        <div class="bottom-controls">
-            <button class="btn-reset-icon" onclick="resetAll()" title="Сбросить всё">🗑️</button>
+    <!-- Сетка расписания -->
+    <div class="schedule-container">
+        <div class="schedule-grid" id="scheduleGrid">
+            <div class="header-cell">Время</div>
+            <div class="header-cell">Понедельник</div>
+            <div class="header-cell">Вторник</div>
+            <div class="header-cell">Среда</div>
+            <div class="header-cell">Четверг</div>
+            <div class="header-cell">Пятница</div>
+            <div class="header-cell">Суббота</div>
         </div>
     </div>
 
-    <!-- Lesson Modal -->
-    <div id="lessonModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2 id="modalTitle">Редактировать занятие</h2>
-                <span class="close" onclick="closeModal('lessonModal')">&times;</span>
-            </div>
-            <form id="lessonForm">
-                <input type="hidden" id="editTime">
-                <input type="hidden" id="editDay">
-                
-                <div class="form-row">
-                    <div class="form-group">
-                        <label>Время начала *</label>
-                        <input type="time" id="lessonStartTime" required>
-                    </div>
-                    <div class="form-group">
-                        <label>Продолжительность (мин) *</label>
-                        <input type="number" id="lessonDuration" required min="15" max="180" step="5" value="50">
-                    </div>
-                </div>
-                
-                <div class="form-group">
-                    <label>Имя ученика(ов) *</label>
-                    <input type="text" id="studentName" required placeholder="Например: Злата, Милада">
-                </div>
-                
-                <div class="form-group">
-                    <label>Предмет *</label>
-                    <select id="subject" required>
-                        <option value="english">🇬🇧 Английский</option>
-                        <option value="spanish">🇸 Испанский</option>
-                        <option value="french">🇫 Французский</option>
-                        <option value="german">🇩🇪 Немецкий</option>
-                        <option value="russian">🇷🇺 Русский</option>
-                        <option value="math">🧮 Математика</option>
-                    </select>
-                </div>
-
-                <div class="form-group">
-                    <label>Тип урока</label>
-                    <select id="lessonType">
-                        <option value="regular" selected>Р - Регулярный</option>
-                        <option value="reschedule">П - Перенос</option>
-                    </select>
-                </div>
-                
-                <div class="form-actions">
-                    <button type="button" onclick="closeModal('lessonModal')">Отмена</button>
-                    <button type="button" class="btn-danger" id="deleteLessonBtn" onclick="deleteLesson()">Удалить</button>
-                    <button type="submit" class="btn-success">Сохранить</button>
-                </div>
-            </form>
+    <!-- Легенда -->
+    <div class="legend">
+        <div class="legend-item">
+            <div class="legend-color" style="border-left-color:var(--c-english)"></div>
+            <span>Английский</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="border-left-color:var(--c-spanish)"></div>
+            <span>Испанский</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="border-left-color:var(--c-french)"></div>
+            <span>Французский</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="border-left-color:var(--c-german)"></div>
+            <span>Немецкий</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="border-left-color:var(--c-russian)"></div>
+            <span>Русский</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="border-left-color:var(--c-math)"></div>
+            <span>Математика</span>
         </div>
     </div>
 
-    <!-- Add Time Modal -->
-    <div id="timeModal" class="modal">
-        <div class="modal-content">
-            <div class="modal-header">
-                <h2>Добавить временной слот</h2>
-                <span class="close" onclick="closeModal('timeModal')">&times;</span>
+    <!-- Трекер задач -->
+    <div class="tracker-section">
+        <div class="tracker-header">
+            <h2>Трекер задач</h2>
+            <div class="tracker-controls">
+                <button class="btn-primary" onclick="toggleTaskForm()">+ Добавить задачу</button>
+                <button onclick="exportTasks()">Экспорт задач</button>
+                <button onclick="document.getElementById('importTasksFile').click()">Импорт задач</button>
+                <input type="file" id="importTasksFile" style="display:none" accept=".json" onchange="importTasks(event)">
             </div>
-            <form id="timeForm">
+        </div>
+
+        <div class="task-input-form" id="taskForm">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Название задачи *</label>
+                    <input type="text" id="taskTitle" placeholder="Что нужно сделать?" required>
+                </div>
+                <div class="form-group">
+                    <label>Приоритет</label>
+                    <select id="taskPriority">
+                        <option value="low">Низкий</option>
+                        <option value="medium" selected>Средний</option>
+                        <option value="high">Высокий</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Срок выполнения</label>
+                    <input type="date" id="taskDeadline">
+                </div>
+                <div class="form-group">
+                    <label>Описание</label>
+                    <input type="text" id="taskDescription" placeholder="Дополнительная информация">
+                </div>
+            </div>
+            <div class="form-actions">
+                <button onclick="toggleTaskForm()">Отмена</button>
+                <button class="btn-success" onclick="saveTask()">Сохранить</button>
+            </div>
+        </div>
+
+        <div class="filter-buttons" id="filterButtons">
+            <button class="active" onclick="filterTasks('all', this)">Все</button>
+            <button onclick="filterTasks('active', this)">Активные</button>
+            <button onclick="filterTasks('completed', this)">Готово</button>
+        </div>
+
+        <div class="stats-bar">
+            <div class="stat-item">
+                <span class="stat-number" id="totalTasks">0</span>
+                <span>всего</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" id="activeTasks">0</span>
+                <span>активных</span>
+            </div>
+            <div class="stat-item">
+                <span class="stat-number" id="completedTasks">0</span>
+                <span>выполнено</span>
+            </div>
+        </div>
+
+        <div class="task-list" id="taskList">
+            <div class="empty-state">
+                <div class="empty-state-icon">📋</div>
+                <div>Задач пока нет</div>
+                <div>Двойной клик — редактировать · перетаскивание — менять порядок</div>
+            </div>
+        </div>
+
+        <div style="margin-top:12px; display:none;" id="clearDoneWrap">
+            <button class="btn-ghost" onclick="clearCompleted()">Очистить выполненные</button>
+        </div>
+    </div>
+
+    <div class="bottom-controls">
+        <button class="btn-reset-icon" onclick="resetAll()" title="Сбросить всё">🗑</button>
+    </div>
+
+</main>
+
+<!-- Модалка урока -->
+<div id="lessonModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modalTitle">Редактировать занятие</h2>
+            <span class="close" onclick="closeModal('lessonModal')">&times;</span>
+        </div>
+        <form id="lessonForm">
+            <input type="hidden" id="editTime">
+            <input type="hidden" id="editDay">
+            <div class="form-row">
                 <div class="form-group">
                     <label>Время начала *</label>
-                    <input type="time" id="newTime" required>
+                    <input type="time" id="lessonStartTime" required>
                 </div>
-                
-                <div class="form-actions">
-                    <button type="button" onclick="closeModal('timeModal')">Отмена</button>
-                    <button type="submit" class="btn-success">Добавить</button>
+                <div class="form-group">
+                    <label>Продолжительность (мин) *</label>
+                    <input type="number" id="lessonDuration" required min="15" max="180" step="5" value="50">
                 </div>
-            </form>
-        </div>
+            </div>
+            <div class="form-group">
+                <label>Имя ученика(ов) *</label>
+                <input type="text" id="studentName" required placeholder="Например: Злата, Милада">
+            </div>
+            <div class="form-group">
+                <label>Предмет *</label>
+                <select id="subject" required>
+                    <option value="english">Английский</option>
+                    <option value="spanish">Испанский</option>
+                    <option value="french">Французский</option>
+                    <option value="german">Немецкий</option>
+                    <option value="russian">Русский</option>
+                    <option value="math">Математика</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Тип урока</label>
+                <select id="lessonType">
+                    <option value="regular" selected>Р — Регулярный</option>
+                    <option value="reschedule">П — Перенос</option>
+                </select>
+            </div>
+            <div class="form-actions">
+                <button type="button" onclick="closeModal('lessonModal')">Отмена</button>
+                <button type="button" class="btn-danger" id="deleteLessonBtn" onclick="deleteLesson()">Удалить</button>
+                <button type="submit" class="btn-success">Сохранить</button>
+            </div>
+        </form>
     </div>
+</div>
 
-    <div class="notification" id="notification"></div>
+<!-- Модалка времени -->
+<div id="timeModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Добавить временной слот</h2>
+            <span class="close" onclick="closeModal('timeModal')">&times;</span>
+        </div>
+        <form id="timeForm">
+            <div class="form-group">
+                <label>Время начала *</label>
+                <input type="time" id="newTime" required>
+            </div>
+            <div class="form-actions">
+                <button type="button" onclick="closeModal('timeModal')">Отмена</button>
+                <button type="submit" class="btn-success">Добавить</button>
+            </div>
+        </form>
+    </div>
+</div>
 
-    <script>
-        // Schedule Data
-        let initialSchedule = {
-            '10:00': {
-                'mon': { name: 'Алиса', subject: 'math', duration: 50, type: 'regular' },
-                'tue': null,
-                'wed': { name: 'Алиса', subject: 'math', duration: 50, type: 'regular' },
-                'thu': null,
-                'fri': { name: 'Алиса', subject: 'english', duration: 50, type: 'regular' },
-                'sat': null
-            },
-            '11:00': {
-                'mon': { name: 'Алиса', subject: 'english', duration: 50, type: 'regular' },
-                'tue': null,
-                'wed': null,
-                'thu': null,
-                'fri': null,
-                'sat': { name: 'Степан', subject: 'english', duration: 50, type: 'regular' }
-            },
-            '12:00': {
-                'mon': null,
-                'tue': null,
-                'wed': null,
-                'thu': null,
-                'fri': null,
-                'sat': { name: 'Дарья SE', subject: 'english', duration: 50, type: 'regular' }
-            },
-            '13:00': {
-                'mon': { name: 'Злата', subject: 'english', duration: 50, type: 'regular' },
-                'tue': { name: 'Злата', subject: 'spanish', duration: 50, type: 'regular' },
-                'wed': { name: 'Злата', subject: 'english', duration: 50, type: 'regular' },
-                'thu': { name: 'Злата', subject: 'spanish', duration: 50, type: 'regular' },
-                'fri': { name: 'Злата', subject: 'english', duration: 50, type: 'regular' },
-                'sat': { name: 'Николай', subject: 'math', duration: 50, type: 'regular' }
-            },
-            '14:00': {
-                'mon': { name: 'Милада', subject: 'english', duration: 50, type: 'regular' },
-                'tue': { name: 'Милада', subject: 'french', duration: 50, type: 'regular' },
-                'wed': { name: 'Милада', subject: 'english', duration: 50, type: 'regular' },
-                'thu': { name: 'Милада', subject: 'french', duration: 50, type: 'regular' },
-                'fri': { name: 'Милада', subject: 'english', duration: 50, type: 'regular' },
-                'sat': null
-            },
-            '15:00': {
-                'mon': { name: 'Денис и Дарина', subject: 'spanish', duration: 50, type: 'regular' },
-                'tue': { name: 'Анна', subject: 'math', duration: 50, type: 'regular' },
-                'wed': { name: 'Денис и Дарина', subject: 'spanish', duration: 50, type: 'regular' },
-                'thu': { name: 'Анна', subject: 'math', duration: 50, type: 'regular' },
-                'fri': { name: 'Денис и Дарина', subject: 'spanish', duration: 50, type: 'regular' },
-                'sat': null
-            },
-            '16:00': {
-                'mon': { name: 'Оксана и Борис', subject: 'spanish', duration: 50, type: 'regular' },
-                'tue': { name: 'Варя, Галя', subject: 'english', duration: 50, type: 'regular' },
-                'wed': { name: 'Оксана и Борис', subject: 'spanish', duration: 50, type: 'regular' },
-                'thu': { name: 'Варя, Галя', subject: 'english', duration: 50, type: 'regular' },
-                'fri': { name: 'Оксана и Борис', subject: 'spanish', duration: 50, type: 'regular' },
-                'sat': null
-            },
-            '17:00': {
-                'mon': { name: 'Андрей', subject: 'english', duration: 50, type: 'regular' },
-                'tue': { name: 'Марк', subject: 'english', duration: 50, type: 'regular' },
-                'wed': { name: 'Степан', subject: 'english', duration: 50, type: 'regular' },
-                'thu': { name: 'Марк', subject: 'english', duration: 50, type: 'regular' },
-                'fri': { name: 'Андрей', subject: 'english', duration: 50, type: 'regular' },
-                'sat': null
-            },
-            '18:00': {
-                'mon': null,
-                'tue': { name: 'Николай', subject: 'math', duration: 50, type: 'regular' },
-                'wed': null,
-                'thu': null,
-                'fri': null,
-                'sat': null
+<div class="notification" id="notification"></div>
+
+<script>
+    let initialSchedule = {
+        '10:00': {
+            'mon': { name: 'Алиса', subject: 'math', duration: 50, type: 'regular' },
+            'tue': null,
+            'wed': { name: 'Алиса', subject: 'math', duration: 50, type: 'regular' },
+            'thu': null,
+            'fri': { name: 'Алиса', subject: 'english', duration: 50, type: 'regular' },
+            'sat': null
+        },
+        '11:00': {
+            'mon': { name: 'Алиса', subject: 'english', duration: 50, type: 'regular' },
+            'tue': null,
+            'wed': null,
+            'thu': null,
+            'fri': null,
+            'sat': { name: 'Степан', subject: 'english', duration: 50, type: 'regular' }
+        },
+        '12:00': {
+            'mon': null,
+            'tue': null,
+            'wed': null,
+            'thu': null,
+            'fri': null,
+            'sat': { name: 'Дарья SE', subject: 'english', duration: 50, type: 'regular' }
+        },
+        '13:00': {
+            'mon': { name: 'Злата', subject: 'english', duration: 50, type: 'regular' },
+            'tue': { name: 'Злата', subject: 'spanish', duration: 50, type: 'regular' },
+            'wed': { name: 'Злата', subject: 'english', duration: 50, type: 'regular' },
+            'thu': { name: 'Злата', subject: 'spanish', duration: 50, type: 'regular' },
+            'fri': { name: 'Злата', subject: 'english', duration: 50, type: 'regular' },
+            'sat': { name: 'Николай', subject: 'math', duration: 50, type: 'regular' }
+        },
+        '14:00': {
+            'mon': { name: 'Милада', subject: 'english', duration: 50, type: 'regular' },
+            'tue': { name: 'Милада', subject: 'french', duration: 50, type: 'regular' },
+            'wed': { name: 'Милада', subject: 'english', duration: 50, type: 'regular' },
+            'thu': { name: 'Милада', subject: 'french', duration: 50, type: 'regular' },
+            'fri': { name: 'Милада', subject: 'english', duration: 50, type: 'regular' },
+            'sat': null
+        },
+        '15:00': {
+            'mon': { name: 'Денис и Дарина', subject: 'spanish', duration: 50, type: 'regular' },
+            'tue': { name: 'Анна', subject: 'math', duration: 50, type: 'regular' },
+            'wed': { name: 'Денис и Дарина', subject: 'spanish', duration: 50, type: 'regular' },
+            'thu': { name: 'Анна', subject: 'math', duration: 50, type: 'regular' },
+            'fri': { name: 'Денис и Дарина', subject: 'spanish', duration: 50, type: 'regular' },
+            'sat': null
+        },
+        '16:00': {
+            'mon': { name: 'Оксана и Борис', subject: 'spanish', duration: 50, type: 'regular' },
+            'tue': { name: 'Варя, Галя', subject: 'english', duration: 50, type: 'regular' },
+            'wed': { name: 'Оксана и Борис', subject: 'spanish', duration: 50, type: 'regular' },
+            'thu': { name: 'Варя, Галя', subject: 'english', duration: 50, type: 'regular' },
+            'fri': { name: 'Оксана и Борис', subject: 'spanish', duration: 50, type: 'regular' },
+            'sat': null
+        },
+        '17:00': {
+            'mon': { name: 'Андрей', subject: 'english', duration: 50, type: 'regular' },
+            'tue': { name: 'Марк', subject: 'english', duration: 50, type: 'regular' },
+            'wed': { name: 'Степан', subject: 'english', duration: 50, type: 'regular' },
+            'thu': { name: 'Марк', subject: 'english', duration: 50, type: 'regular' },
+            'fri': { name: 'Андрей', subject: 'english', duration: 50, type: 'regular' },
+            'sat': null
+        },
+        '18:00': {
+            'mon': null,
+            'tue': { name: 'Николай', subject: 'math', duration: 50, type: 'regular' },
+            'wed': null,
+            'thu': null,
+            'fri': null,
+            'sat': null
+        }
+    };
+
+    let schedule = JSON.parse(JSON.stringify(initialSchedule));
+    const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
+    const dayNames = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
+    let times = ['10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
+
+    let tasks = [];
+    let currentFilter = 'all';
+    let editingTaskId = null;
+
+    function calculateEndTime(startTime, duration) {
+        const [hours, minutes] = startTime.split(':').map(Number);
+        const startDate = new Date();
+        startDate.setHours(hours, minutes);
+        const endDate = new Date(startDate.getTime() + duration * 60000);
+        return `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`;
+    }
+
+    function getSubjectName(subject) {
+        const names = {
+            'english': 'Английский',
+            'spanish': 'Испанский',
+            'french': 'Французский',
+            'german': 'Немецкий',
+            'russian': 'Русский',
+            'math': 'Математика'
+        };
+        return names[subject] || subject;
+    }
+
+    function renderSchedule() {
+        const grid = document.getElementById('scheduleGrid');
+        const oldSlots = grid.querySelectorAll('.time-cell, .slot');
+        oldSlots.forEach(slot => slot.remove());
+
+        times.sort();
+
+        const todayIdx = new Date().getDay();
+        const dayMap = [6, 0, 1, 2, 3, 4, 5];
+        const todayDay = days[dayMap[todayIdx]];
+
+        const headers = grid.querySelectorAll('.header-cell');
+        headers.forEach((h, i) => {
+            if (i > 0) {
+                const d = days[i - 1];
+                h.classList.toggle('today', d === todayDay);
             }
+        });
+
+        let totalSlots = 0;
+        let filledSlots = 0;
+
+        times.forEach(time => {
+            const timeCell = document.createElement('div');
+            timeCell.className = 'time-cell';
+            const endTime = calculateEndTime(time, 60);
+            timeCell.innerHTML = `
+                <div>${time}</div>
+                <div class="time-range">— ${endTime}</div>
+                <button onclick="deleteTimeSlot('${time}')">✕ Удалить</button>
+            `;
+            grid.appendChild(timeCell);
+
+            days.forEach(day => {
+                totalSlots++;
+                const slot = document.createElement('div');
+                slot.className = 'slot';
+                slot.dataset.time = time;
+                slot.dataset.day = day;
+
+                slot.addEventListener('dragover', handleDragOver);
+                slot.addEventListener('dragleave', handleDragLeave);
+                slot.addEventListener('drop', handleDrop);
+                slot.addEventListener('dblclick', () => openEditLessonModal(time, day));
+
+                const lesson = schedule[time][day];
+                if (lesson) {
+                    filledSlots++;
+                    const lessonEl = createLessonElement(lesson, time, day);
+                    slot.appendChild(lessonEl);
+                }
+
+                grid.appendChild(slot);
+            });
+        });
+
+        const pct = totalSlots > 0 ? Math.round(filledSlots / totalSlots * 100) : 0;
+        document.getElementById('ringPct').textContent = pct + '%';
+        document.getElementById('ring').style.setProperty('--p', pct);
+    }
+
+    function createLessonElement(lesson, time, day) {
+        const lessonEl = document.createElement('div');
+        lessonEl.className = `lesson lesson-${lesson.subject}`;
+        lessonEl.draggable = true;
+        lessonEl.dataset.time = time;
+        lessonEl.dataset.day = day;
+
+        const duration = lesson.duration || 50;
+        const endTime = calculateEndTime(time, duration);
+        const type = lesson.type || 'regular';
+        const typeLabel = type === 'regular' ? 'Р' : 'П';
+
+        lessonEl.innerHTML = `
+            <div class="lesson-type">${typeLabel}</div>
+            <div class="lesson-time">${time} — ${endTime} (${duration} мин)</div>
+            <div class="lesson-name">${lesson.name}</div>
+            <div class="lesson-subject">${getSubjectName(lesson.subject)}</div>
+            <div class="lesson-actions">
+                <button onclick="event.stopPropagation(); openEditLessonModal('${time}', '${day}')" title="Редактировать">✏</button>
+                <button class="btn-delete-icon" onclick="event.stopPropagation(); deleteSpecificLesson('${time}', '${day}')" title="Удалить">🗑</button>
+            </div>
+        `;
+
+        lessonEl.addEventListener('dragstart', handleDragStart);
+        lessonEl.addEventListener('dragend', handleDragEnd);
+        lessonEl.addEventListener('dblclick', (e) => {
+            e.stopPropagation();
+            openEditLessonModal(time, day);
+        });
+
+        return lessonEl;
+    }
+
+    function handleDragStart(e) {
+        e.target.classList.add('dragging');
+        e.dataTransfer.effectAllowed = 'move';
+        e.dataTransfer.setData('text/plain', JSON.stringify({
+            time: e.target.dataset.time,
+            day: e.target.dataset.day
+        }));
+    }
+
+    function handleDragEnd(e) {
+        e.target.classList.remove('dragging');
+        document.querySelectorAll('.slot').forEach(slot => {
+            slot.classList.remove('drag-over');
+        });
+    }
+
+    function handleDragOver(e) {
+        e.preventDefault();
+        e.dataTransfer.dropEffect = 'move';
+        e.currentTarget.classList.add('drag-over');
+    }
+
+    function handleDragLeave(e) {
+        e.currentTarget.classList.remove('drag-over');
+    }
+
+    function handleDrop(e) {
+        e.preventDefault();
+        e.currentTarget.classList.remove('drag-over');
+
+        const targetTime = e.currentTarget.dataset.time;
+        const targetDay = e.currentTarget.dataset.day;
+
+        try {
+            const data = JSON.parse(e.dataTransfer.getData('text/plain'));
+            const lesson = schedule[data.time][data.day];
+            schedule[targetTime][targetDay] = lesson;
+            schedule[data.time][data.day] = null;
+            renderSchedule();
+            showNotification('Занятие перемещено!');
+        } catch (err) {
+            console.error('Drop error:', err);
+        }
+    }
+
+    function openEditLessonModal(time, day) {
+        const modal = document.getElementById('lessonModal');
+        const form = document.getElementById('lessonForm');
+        const deleteBtn = document.getElementById('deleteLessonBtn');
+
+        document.getElementById('editTime').value = time;
+        document.getElementById('editDay').value = day;
+
+        if (day === 'new' || !schedule[time] || !schedule[time][day]) {
+            document.getElementById('modalTitle').textContent = 'Добавить занятие';
+            form.reset();
+            document.getElementById('lessonStartTime').value = time;
+            document.getElementById('lessonDuration').value = 50;
+            document.getElementById('lessonType').value = 'regular';
+            deleteBtn.style.display = 'none';
+        } else {
+            const lesson = schedule[time][day];
+            document.getElementById('modalTitle').textContent = 'Редактировать занятие';
+            document.getElementById('lessonStartTime').value = time;
+            document.getElementById('lessonDuration').value = lesson.duration || 50;
+            document.getElementById('studentName').value = lesson.name;
+            document.getElementById('subject').value = lesson.subject;
+            document.getElementById('lessonType').value = lesson.type || 'regular';
+            deleteBtn.style.display = 'inline-block';
+        }
+
+        modal.style.display = 'block';
+    }
+
+    function openAddTimeModal() {
+        document.getElementById('timeModal').style.display = 'block';
+    }
+
+    function closeModal(modalId) {
+        document.getElementById(modalId).style.display = 'none';
+    }
+
+    document.getElementById('lessonForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const oldTime = document.getElementById('editTime').value;
+        const day = document.getElementById('editDay').value;
+        const newTime = document.getElementById('lessonStartTime').value;
+        const duration = parseInt(document.getElementById('lessonDuration').value);
+        const type = document.getElementById('lessonType').value;
+
+        const lessonData = {
+            name: document.getElementById('studentName').value,
+            subject: document.getElementById('subject').value,
+            duration: duration,
+            type: type
         };
 
-        let schedule = JSON.parse(JSON.stringify(initialSchedule));
-        const days = ['mon', 'tue', 'wed', 'thu', 'fri', 'sat'];
-        const dayNames = ['Понедельник', 'Вторник', 'Среда', 'Четверг', 'Пятница', 'Суббота'];
-        let times = ['10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
-
-        // Task Tracker Data
-        let tasks = [];
-        let currentFilter = 'all';
-        let editingTaskId = null;
-
-        // Helper Functions
-        function calculateEndTime(startTime, duration) {
-            const [hours, minutes] = startTime.split(':').map(Number);
-            const startDate = new Date();
-            startDate.setHours(hours, minutes);
-            const endDate = new Date(startDate.getTime() + duration * 60000);
-            return `${String(endDate.getHours()).padStart(2, '0')}:${String(endDate.getMinutes()).padStart(2, '0')}`;
+        if (oldTime !== newTime && schedule[oldTime] && schedule[oldTime][day]) {
+            schedule[oldTime][day] = null;
         }
 
-        function getSubjectName(subject) {
-            const names = {
-                'english': 'Английский',
-                'spanish': 'Испанский',
-                'french': 'Французский',
-                'german': 'Немецкий',
-                'russian': 'Русский',
-                'math': 'Математика'
-            };
-            return names[subject] || subject;
-        }
-
-        // Schedule Functions
-        function renderSchedule() {
-            const grid = document.getElementById('scheduleGrid');
-            const oldSlots = grid.querySelectorAll('.time-cell, .slot');
-            oldSlots.forEach(slot => slot.remove());
-
-            times.sort();
-
-            times.forEach(time => {
-                const timeCell = document.createElement('div');
-                timeCell.className = 'time-cell';
-                const endTime = calculateEndTime(time, 60);
-                timeCell.innerHTML = `
-                    <div>${time}</div>
-                    <div class="time-range">— ${endTime}</div>
-                    <button onclick="deleteTimeSlot('${time}')" style="margin-top: 6px; font-size: 11px; padding: 4px 8px;">× Удалить</button>
-                `;
-                grid.appendChild(timeCell);
-
-                days.forEach(day => {
-                    const slot = document.createElement('div');
-                    slot.className = 'slot';
-                    slot.dataset.time = time;
-                    slot.dataset.day = day;
-
-                    slot.addEventListener('dragover', handleDragOver);
-                    slot.addEventListener('dragleave', handleDragLeave);
-                    slot.addEventListener('drop', handleDrop);
-                    slot.addEventListener('dblclick', () => openEditLessonModal(time, day));
-
-                    const lesson = schedule[time][day];
-                    if (lesson) {
-                        const lessonEl = createLessonElement(lesson, time, day);
-                        slot.appendChild(lessonEl);
-                    }
-
-                    grid.appendChild(slot);
-                });
-            });
-        }
-
-        function createLessonElement(lesson, time, day) {
-            const lessonEl = document.createElement('div');
-            lessonEl.className = `lesson lesson-${lesson.subject}`;
-            lessonEl.draggable = true;
-            lessonEl.dataset.time = time;
-            lessonEl.dataset.day = day;
-
-            const duration = lesson.duration || 50;
-            const endTime = calculateEndTime(time, duration);
-            const type = lesson.type || 'regular';
-            const typeLabel = type === 'regular' ? 'Р' : 'П';
-
-            lessonEl.innerHTML = `
-                <div class="lesson-type">${typeLabel}</div>
-                <div class="lesson-time">${time} — ${endTime} (${duration} мин)</div>
-                <div class="lesson-name">${lesson.name}</div>
-                <div class="lesson-subject">${getSubjectName(lesson.subject)}</div>
-                <div class="lesson-actions">
-                    <button onclick="event.stopPropagation(); openEditLessonModal('${time}', '${day}')" title="Редактировать">✏️</button>
-                    <button class="btn-delete-icon" onclick="event.stopPropagation(); deleteSpecificLesson('${time}', '${day}')" title="Удалить">🗑️</button>
-                </div>
-            `;
-
-            lessonEl.addEventListener('dragstart', handleDragStart);
-            lessonEl.addEventListener('dragend', handleDragEnd);
-            lessonEl.addEventListener('dblclick', (e) => {
-                e.stopPropagation();
-                openEditLessonModal(time, day);
-            });
-
-            return lessonEl;
-        }
-
-        function handleDragStart(e) {
-            e.target.classList.add('dragging');
-            e.dataTransfer.effectAllowed = 'move';
-            e.dataTransfer.setData('text/plain', JSON.stringify({
-                time: e.target.dataset.time,
-                day: e.target.dataset.day
-            }));
-        }
-
-        function handleDragEnd(e) {
-            e.target.classList.remove('dragging');
-            document.querySelectorAll('.slot').forEach(slot => {
-                slot.classList.remove('drag-over');
-            });
-        }
-
-        function handleDragOver(e) {
-            e.preventDefault();
-            e.dataTransfer.dropEffect = 'move';
-            e.currentTarget.classList.add('drag-over');
-        }
-
-        function handleDragLeave(e) {
-            e.currentTarget.classList.remove('drag-over');
-        }
-
-        function handleDrop(e) {
-            e.preventDefault();
-            e.currentTarget.classList.remove('drag-over');
-
-            const targetTime = e.currentTarget.dataset.time;
-            const targetDay = e.currentTarget.dataset.day;
-
-            try {
-                const data = JSON.parse(e.dataTransfer.getData('text/plain'));
-                const lesson = schedule[data.time][data.day];
-                schedule[targetTime][targetDay] = lesson;
-                schedule[data.time][data.day] = null;
-                renderSchedule();
-                showNotification('✅ Занятие перемещено!');
-            } catch (err) {
-                console.error('Drop error:', err);
-            }
-        }
-
-        // Lesson Modal Functions
-        function openEditLessonModal(time, day) {
-            const modal = document.getElementById('lessonModal');
-            const form = document.getElementById('lessonForm');
-            const deleteBtn = document.getElementById('deleteLessonBtn');
-            
-            document.getElementById('editTime').value = time;
-            document.getElementById('editDay').value = day;
-            
-            if (day === 'new' || !schedule[time] || !schedule[time][day]) {
-                document.getElementById('modalTitle').textContent = 'Добавить занятие';
-                form.reset();
-                document.getElementById('lessonStartTime').value = time;
-                document.getElementById('lessonDuration').value = 50;
-                document.getElementById('lessonType').value = 'regular';
-                deleteBtn.style.display = 'none';
-            } else {
-                const lesson = schedule[time][day];
-                document.getElementById('modalTitle').textContent = 'Редактировать занятие';
-                document.getElementById('lessonStartTime').value = time;
-                document.getElementById('lessonDuration').value = lesson.duration || 50;
-                document.getElementById('studentName').value = lesson.name;
-                document.getElementById('subject').value = lesson.subject;
-                document.getElementById('lessonType').value = lesson.type || 'regular';
-                deleteBtn.style.display = 'inline-block';
-            }
-            
-            modal.style.display = 'block';
-        }
-
-        function openAddTimeModal() {
-            document.getElementById('timeModal').style.display = 'block';
-        }
-
-        function closeModal(modalId) {
-            document.getElementById(modalId).style.display = 'none';
-        }
-
-        document.getElementById('lessonForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const oldTime = document.getElementById('editTime').value;
-            const day = document.getElementById('editDay').value;
-            const newTime = document.getElementById('lessonStartTime').value;
-            const duration = parseInt(document.getElementById('lessonDuration').value);
-            const type = document.getElementById('lessonType').value;
-            
-            const lessonData = {
-                name: document.getElementById('studentName').value,
-                subject: document.getElementById('subject').value,
-                duration: duration,
-                type: type
-            };
-            
-            if (oldTime !== newTime && schedule[oldTime] && schedule[oldTime][day]) {
-                schedule[oldTime][day] = null;
-            }
-            
-            if (!schedule[newTime]) {
-                schedule[newTime] = {};
-                days.forEach(d => schedule[newTime][d] = null);
-                if (!times.includes(newTime)) {
-                    times.push(newTime);
-                }
-            }
-            
-            schedule[newTime][day] = lessonData;
-            
+        if (!schedule[newTime]) {
+            schedule[newTime] = {};
+            days.forEach(d => schedule[newTime][d] = null);
             if (!times.includes(newTime)) {
                 times.push(newTime);
             }
-            
-            renderSchedule();
-            closeModal('lessonModal');
-            showNotification('✅ Занятие сохранено!');
-        });
-
-        document.getElementById('timeForm').addEventListener('submit', function(e) {
-            e.preventDefault();
-            
-            const newTime = document.getElementById('newTime').value;
-            
-            if (times.includes(newTime)) {
-                showNotification('️ Это время уже существует!');
-                return;
-            }
-            
-            schedule[newTime] = {};
-            days.forEach(day => schedule[newTime][day] = null);
-            times.push(newTime);
-            
-            renderSchedule();
-            closeModal('timeModal');
-            showNotification('✅ Время добавлено!');
-        });
-
-        function deleteSpecificLesson(time, day) {
-            if (confirm('Удалить это занятие?')) {
-                if (schedule[time] && schedule[time][day]) {
-                    schedule[time][day] = null;
-                    renderSchedule();
-                    showNotification('🗑️ Занятие удалено!');
-                }
-            }
         }
 
-        function deleteLesson() {
-            const time = document.getElementById('editTime').value;
-            const day = document.getElementById('editDay').value;
-            
+        schedule[newTime][day] = lessonData;
+
+        if (!times.includes(newTime)) {
+            times.push(newTime);
+        }
+
+        renderSchedule();
+        closeModal('lessonModal');
+        showNotification('Занятие сохранено!');
+    });
+
+    document.getElementById('timeForm').addEventListener('submit', function(e) {
+        e.preventDefault();
+
+        const newTime = document.getElementById('newTime').value;
+
+        if (times.includes(newTime)) {
+            showNotification('Это время уже существует!');
+            return;
+        }
+
+        schedule[newTime] = {};
+        days.forEach(day => schedule[newTime][day] = null);
+        times.push(newTime);
+
+        renderSchedule();
+        closeModal('timeModal');
+        showNotification('Время добавлено!');
+    });
+
+    function deleteSpecificLesson(time, day) {
+        if (confirm('Удалить это занятие?')) {
             if (schedule[time] && schedule[time][day]) {
                 schedule[time][day] = null;
                 renderSchedule();
-                closeModal('lessonModal');
-                showNotification('🗑️ Занятие удалено!');
+                showNotification('Занятие удалено!');
             }
         }
+    }
 
-        function deleteTimeSlot(time) {
-            if (confirm(`⚠️ Удалить весь временной слот ${time}?`)) {
-                delete schedule[time];
-                times = times.filter(t => t !== time);
-                renderSchedule();
-                showNotification('🗑️ Время удалено!');
-            }
+    function deleteLesson() {
+        const time = document.getElementById('editTime').value;
+        const day = document.getElementById('editDay').value;
+
+        if (schedule[time] && schedule[time][day]) {
+            schedule[time][day] = null;
+            renderSchedule();
+            closeModal('lessonModal');
+            showNotification('Занятие удалено!');
+        }
+    }
+
+    function deleteTimeSlot(time) {
+        if (confirm(`Удалить весь временной слот ${time}?`)) {
+            delete schedule[time];
+            times = times.filter(t => t !== time);
+            renderSchedule();
+            showNotification('Время удалено!');
+        }
+    }
+
+    // ===== Task Tracker =====
+    function toggleTaskForm() {
+        const form = document.getElementById('taskForm');
+        form.classList.toggle('active');
+        if (form.classList.contains('active')) {
+            document.getElementById('taskTitle').focus();
+        }
+    }
+
+    function saveTask() {
+        const title = document.getElementById('taskTitle').value.trim();
+        const priority = document.getElementById('taskPriority').value;
+        const deadline = document.getElementById('taskDeadline').value;
+        const description = document.getElementById('taskDescription').value.trim();
+
+        if (!title) {
+            showNotification('Введите название задачи!');
+            return;
         }
 
-        // Task Tracker Functions
-        function toggleTaskForm() {
-            const form = document.getElementById('taskForm');
-            form.classList.toggle('active');
-            if (form.classList.contains('active')) {
-                document.getElementById('taskTitle').focus();
+        const task = {
+            id: editingTaskId || Date.now(),
+            title,
+            priority,
+            deadline,
+            description,
+            completed: false,
+            createdAt: new Date().toISOString()
+        };
+
+        if (editingTaskId) {
+            const index = tasks.findIndex(t => t.id === editingTaskId);
+            if (index !== -1) {
+                task.completed = tasks[index].completed;
+                tasks[index] = task;
             }
+            editingTaskId = null;
+        } else {
+            tasks.push(task);
         }
 
-        function saveTask() {
-            const title = document.getElementById('taskTitle').value.trim();
-            const priority = document.getElementById('taskPriority').value;
-            const deadline = document.getElementById('taskDeadline').value;
-            const description = document.getElementById('taskDescription').value.trim();
+        document.getElementById('taskTitle').value = '';
+        document.getElementById('taskDeadline').value = '';
+        document.getElementById('taskDescription').value = '';
+        document.getElementById('taskPriority').value = 'medium';
 
-            if (!title) {
-                showNotification('⚠️ Введите название задачи!');
-                return;
-            }
+        toggleTaskForm();
+        renderTasks();
+        showNotification('Задача сохранена!');
+    }
 
-            const task = {
-                id: editingTaskId || Date.now(),
-                title,
-                priority,
-                deadline,
-                description,
-                completed: false,
-                createdAt: new Date().toISOString()
-            };
+    function renderTasks() {
+        const list = document.getElementById('taskList');
+        list.innerHTML = '';
 
-            if (editingTaskId) {
-                const index = tasks.findIndex(t => t.id === editingTaskId);
-                if (index !== -1) {
-                    task.completed = tasks[index].completed;
-                    tasks[index] = task;
-                }
-                editingTaskId = null;
-            } else {
-                tasks.push(task);
-            }
-
-            document.getElementById('taskTitle').value = '';
-            document.getElementById('taskDeadline').value = '';
-            document.getElementById('taskDescription').value = '';
-            document.getElementById('taskPriority').value = 'medium';
-            
-            toggleTaskForm();
-            renderTasks();
-            showNotification('✅ Задача сохранена!');
+        let filteredTasks = tasks;
+        if (currentFilter === 'active') {
+            filteredTasks = tasks.filter(t => !t.completed);
+        } else if (currentFilter === 'completed') {
+            filteredTasks = tasks.filter(t => t.completed);
         }
 
-        function renderTasks() {
-            const list = document.getElementById('taskList');
-            list.innerHTML = '';
-
-            let filteredTasks = tasks;
-            if (currentFilter === 'active') {
-                filteredTasks = tasks.filter(t => !t.completed);
-            } else if (currentFilter === 'completed') {
-                filteredTasks = tasks.filter(t => t.completed);
+        if (filteredTasks.length === 0) {
+            let msg = 'Задач пока нет';
+            let sub = 'Нажмите «Добавить задачу» чтобы начать';
+            if (tasks.length > 0 && currentFilter === 'active') {
+                msg = 'Всё выполнено!';
+                sub = 'Отличная работа';
+            } else if (tasks.length > 0 && currentFilter === 'completed') {
+                msg = 'Выполненных задач нет';
+                sub = 'Отметьте первую задачу';
             }
-
-            if (filteredTasks.length === 0) {
-                list.innerHTML = `
-                    <div class="empty-state">
-                        <div class="empty-state-icon">📋</div>
-                        <div>Задач пока нет</div>
-                        <div style="margin-top: 8px; font-size: 0.85em; color: #999;">Двойной клик — редактировать · перетаскивание — менять порядок</div>
-                    </div>
-                `;
-            } else {
-                filteredTasks.forEach(task => {
-                    const taskEl = createTaskElement(task);
-                    list.appendChild(taskEl);
-                });
-            }
-
-            updateStats();
-        }
-
-        function createTaskElement(task) {
-            const div = document.createElement('div');
-            div.className = `task-item ${task.completed ? 'completed' : ''}`;
-            div.draggable = true;
-            div.dataset.id = task.id;
-
-            const priorityText = {
-                'low': 'Низкий',
-                'medium': 'Средний',
-                'high': 'Высокий'
-            };
-
-            const deadlineText = task.deadline ? new Date(task.deadline).toLocaleDateString('ru-RU') : '';
-
-            div.innerHTML = `
-                <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask(${task.id})">
-                <div class="task-content">
-                    <div class="task-title">${task.title}</div>
-                    <div class="task-meta">
-                        <span class="task-priority priority-${task.priority}">${priorityText[task.priority]}</span>
-                        ${deadlineText ? `<span class="task-deadline"> ${deadlineText}</span>` : ''}
-                        ${task.description ? `<span>📝 ${task.description}</span>` : ''}
-                    </div>
-                </div>
-                <div class="task-actions">
-                    <button onclick="editTask(${task.id})">✏️</button>
-                    <button onclick="deleteTask(${task.id})" class="btn-danger">🗑️</button>
+            list.innerHTML = `
+                <div class="empty-state">
+                    <div class="empty-state-icon">📋</div>
+                    <div>${msg}</div>
+                    <div>${sub}</div>
                 </div>
             `;
-
-            div.addEventListener('dblclick', () => editTask(task.id));
-            div.addEventListener('dragstart', handleTaskDragStart);
-            div.addEventListener('dragend', handleTaskDragEnd);
-            div.addEventListener('dragover', handleTaskDragOver);
-            div.addEventListener('drop', handleTaskDrop);
-
-            return div;
-        }
-
-        function toggleTask(id) {
-            const task = tasks.find(t => t.id === id);
-            if (task) {
-                task.completed = !task.completed;
-                renderTasks();
-            }
-        }
-
-        function editTask(id) {
-            const task = tasks.find(t => t.id === id);
-            if (task) {
-                editingTaskId = id;
-                document.getElementById('taskTitle').value = task.title;
-                document.getElementById('taskPriority').value = task.priority;
-                document.getElementById('taskDeadline').value = task.deadline || '';
-                document.getElementById('taskDescription').value = task.description || '';
-                document.getElementById('taskForm').classList.add('active');
-            }
-        }
-
-        function deleteTask(id) {
-            if (confirm('Удалить задачу?')) {
-                tasks = tasks.filter(t => t.id !== id);
-                renderTasks();
-                showNotification('️ Задача удалена!');
-            }
-        }
-
-        function clearCompleted() {
-            if (confirm('Удалить все выполненные задачи?')) {
-                tasks = tasks.filter(t => !t.completed);
-                renderTasks();
-                showNotification('️ Выполненные задачи удалены!');
-            }
-        }
-
-        function filterTasks(filter) {
-            currentFilter = filter;
-            document.querySelectorAll('.filter-buttons button').forEach(btn => {
-                btn.classList.remove('active');
+        } else {
+            filteredTasks.forEach(task => {
+                const taskEl = createTaskElement(task);
+                list.appendChild(taskEl);
             });
-            event.target.classList.add('active');
+        }
+
+        updateStats();
+        updateClearButton();
+    }
+
+    function createTaskElement(task) {
+        const div = document.createElement('div');
+        const prioClass = task.priority === 'high' ? 'p-high' : task.priority === 'medium' ? 'p-med' : 'p-low';
+        div.className = `task-item ${prioClass} ${task.completed ? 'completed' : ''}`;
+        div.draggable = true;
+        div.dataset.id = task.id;
+
+        const priorityText = {
+            'low': 'Низкий',
+            'medium': 'Средний',
+            'high': 'Высокий'
+        };
+
+        const deadlineText = task.deadline ? new Date(task.deadline).toLocaleDateString('ru-RU') : '';
+
+        div.innerHTML = `
+            <input type="checkbox" class="task-checkbox" ${task.completed ? 'checked' : ''} onchange="toggleTask(${task.id})">
+            <div class="task-content">
+                <div class="task-title">${task.title}</div>
+                <div class="task-meta">
+                    <span class="task-priority priority-${task.priority}">${priorityText[task.priority]}</span>
+                    ${deadlineText ? `<span class="task-deadline">📅 ${deadlineText}</span>` : ''}
+                    ${task.description ? `<span>${task.description}</span>` : ''}
+                </div>
+            </div>
+            <div class="task-actions">
+                <button onclick="event.stopPropagation(); editTask(${task.id})">✏</button>
+                <button class="btn-delete-icon" onclick="event.stopPropagation(); deleteTask(${task.id})">🗑</button>
+            </div>
+        `;
+
+        div.addEventListener('dblclick', () => editTask(task.id));
+        div.addEventListener('dragstart', handleTaskDragStart);
+        div.addEventListener('dragend', handleTaskDragEnd);
+        div.addEventListener('dragover', handleTaskDragOver);
+        div.addEventListener('drop', handleTaskDrop);
+
+        return div;
+    }
+
+    function toggleTask(id) {
+        const task = tasks.find(t => t.id === id);
+        if (task) {
+            task.completed = !task.completed;
             renderTasks();
         }
+    }
 
-        function updateStats() {
-            const total = tasks.length;
-            const completed = tasks.filter(t => t.completed).length;
-            const active = total - completed;
-
-            document.getElementById('totalTasks').textContent = total;
-            document.getElementById('activeTasks').textContent = active;
-            document.getElementById('completedTasks').textContent = completed;
+    function editTask(id) {
+        const task = tasks.find(t => t.id === id);
+        if (task) {
+            editingTaskId = id;
+            document.getElementById('taskTitle').value = task.title;
+            document.getElementById('taskPriority').value = task.priority;
+            document.getElementById('taskDeadline').value = task.deadline || '';
+            document.getElementById('taskDescription').value = task.description || '';
+            document.getElementById('taskForm').classList.add('active');
         }
+    }
 
-        // Task Drag and Drop
-        let draggedTaskId = null;
-
-        function handleTaskDragStart(e) {
-            draggedTaskId = parseInt(e.target.dataset.id);
-            e.target.style.opacity = '0.5';
+    function deleteTask(id) {
+        if (confirm('Удалить задачу?')) {
+            tasks = tasks.filter(t => t.id !== id);
+            renderTasks();
+            showNotification('Задача удалена!');
         }
+    }
 
-        function handleTaskDragEnd(e) {
-            e.target.style.opacity = '';
+    function clearCompleted() {
+        if (confirm('Удалить все выполненные задачи?')) {
+            tasks = tasks.filter(t => !t.completed);
+            renderTasks();
+            showNotification('Выполненные задачи удалены!');
         }
+    }
 
-        function handleTaskDragOver(e) {
-            e.preventDefault();
-        }
+    function filterTasks(filter, btn) {
+        currentFilter = filter;
+        document.querySelectorAll('.filter-buttons button').forEach(b => b.classList.remove('active'));
+        btn.classList.add('active');
+        renderTasks();
+    }
 
-        function handleTaskDrop(e) {
-            e.preventDefault();
-            const targetId = parseInt(e.currentTarget.dataset.id);
-            
-            if (draggedTaskId && targetId && draggedTaskId !== targetId) {
-                const draggedIndex = tasks.findIndex(t => t.id === draggedTaskId);
-                const targetIndex = tasks.findIndex(t => t.id === targetId);
-                
-                if (draggedIndex !== -1 && targetIndex !== -1) {
-                    const [removed] = tasks.splice(draggedIndex, 1);
-                    tasks.splice(targetIndex, 0, removed);
-                    renderTasks();
-                }
-            }
-        }
+    function updateStats() {
+        const total = tasks.length;
+        const completed = tasks.filter(t => t.completed).length;
+        const active = total - completed;
 
-        // Export/Import Functions
-        function saveSchedule() {
-            localStorage.setItem('schedule', JSON.stringify(schedule));
-            localStorage.setItem('times', JSON.stringify(times));
-            showNotification('💾 Расписание сохранено!');
-        }
+        document.getElementById('totalTasks').textContent = total;
+        document.getElementById('activeTasks').textContent = active;
+        document.getElementById('completedTasks').textContent = completed;
+    }
 
-        function loadSchedule() {
-            const saved = localStorage.getItem('schedule');
-            const savedTimes = localStorage.getItem('times');
-            if (saved) {
-                schedule = JSON.parse(saved);
-            }
-            if (savedTimes) {
-                times = JSON.parse(savedTimes);
-            }
-            renderSchedule();
-        }
+    function updateClearButton() {
+        const done = tasks.filter(t => t.completed).length;
+        document.getElementById('clearDoneWrap').style.display = done > 0 ? 'block' : 'none';
+    }
 
-        function exportSchedule() {
-            const dataStr = JSON.stringify({ schedule, times }, null, 2);
-            const blob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'расписание_МУДРО.json';
-            a.click();
-            URL.revokeObjectURL(url);
-            showNotification('📤 Расписание экспортировано!');
-        }
+    let draggedTaskId = null;
 
-        function importSchedule(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    try {
-                        const data = JSON.parse(e.target.result);
-                        schedule = data.schedule;
-                        if (data.times) {
-                            times = data.times;
-                        }
-                        renderSchedule();
-                        showNotification('📥 Расписание импортировано!');
-                    } catch (error) {
-                        alert('Ошибка при импорте файла!');
-                    }
-                };
-                reader.readAsText(file);
-            }
-        }
+    function handleTaskDragStart(e) {
+        draggedTaskId = parseInt(e.currentTarget.dataset.id);
+        e.currentTarget.style.opacity = '0.5';
+    }
 
-        function exportTasks() {
-            const dataStr = JSON.stringify(tasks, null, 2);
-            const blob = new Blob([dataStr], { type: 'application/json' });
-            const url = URL.createObjectURL(blob);
-            const a = document.createElement('a');
-            a.href = url;
-            a.download = 'задачи_МУДРО.json';
-            a.click();
-            URL.revokeObjectURL(url);
-            showNotification('📤 Задачи экспортированы!');
-        }
+    function handleTaskDragEnd(e) {
+        e.currentTarget.style.opacity = '';
+    }
 
-        function importTasks(event) {
-            const file = event.target.files[0];
-            if (file) {
-                const reader = new FileReader();
-                reader.onload = function(e) {
-                    try {
-                        tasks = JSON.parse(e.target.result);
-                        renderTasks();
-                        showNotification('📥 Задачи импортированы!');
-                    } catch (error) {
-                        alert('Ошибка при импорте файла!');
-                    }
-                };
-                reader.readAsText(file);
-            }
-        }
+    function handleTaskDragOver(e) {
+        e.preventDefault();
+    }
 
-        function resetAll() {
-            if (confirm('⚠️ Вы уверены, что хотите сбросить ВСЁ? Расписание и задачи будут удалены!')) {
-                schedule = JSON.parse(JSON.stringify(initialSchedule));
-                times = ['10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
-                tasks = [];
-                localStorage.removeItem('schedule');
-                localStorage.removeItem('times');
-                localStorage.removeItem('tasks');
-                renderSchedule();
+    function handleTaskDrop(e) {
+        e.preventDefault();
+        e.stopPropagation();
+        const targetId = parseInt(e.currentTarget.dataset.id);
+
+        if (draggedTaskId && targetId && draggedTaskId !== targetId) {
+            const draggedIndex = tasks.findIndex(t => t.id === draggedTaskId);
+            const targetIndex = tasks.findIndex(t => t.id === targetId);
+
+            if (draggedIndex !== -1 && targetIndex !== -1) {
+                const [removed] = tasks.splice(draggedIndex, 1);
+                tasks.splice(targetIndex, 0, removed);
                 renderTasks();
-                showNotification('🗑️ Всё сброшено!');
             }
         }
+    }
 
-        function showNotification(message) {
-            const notification = document.getElementById('notification');
-            notification.textContent = message;
-            notification.classList.add('show');
-            setTimeout(() => {
-                notification.classList.remove('show');
-            }, 3000);
+    // ===== Export/Import =====
+    function saveSchedule() {
+        localStorage.setItem('schedule', JSON.stringify(schedule));
+        localStorage.setItem('times', JSON.stringify(times));
+        showNotification('Расписание сохранено!');
+    }
+
+    function loadSchedule() {
+        const saved = localStorage.getItem('schedule');
+        const savedTimes = localStorage.getItem('times');
+        if (saved) {
+            schedule = JSON.parse(saved);
         }
-
-        // Close modals on outside click
-        window.onclick = function(event) {
-            if (event.target.classList.contains('modal')) {
-                event.target.style.display = 'none';
-            }
+        if (savedTimes) {
+            times = JSON.parse(savedTimes);
         }
+        renderSchedule();
+    }
 
-        // Save tasks to localStorage
-        function saveTasks() {
-            localStorage.setItem('tasks', JSON.stringify(tasks));
+    function exportSchedule() {
+        const dataStr = JSON.stringify({ schedule, times }, null, 2);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'расписание_МУДРО.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        showNotification('Расписание экспортировано!');
+    }
+
+    function importSchedule(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    const data = JSON.parse(e.target.result);
+                    schedule = data.schedule;
+                    if (data.times) {
+                        times = data.times;
+                    }
+                    renderSchedule();
+                    showNotification('Расписание импортировано!');
+                } catch (error) {
+                    alert('Ошибка при импорте файла!');
+                }
+            };
+            reader.readAsText(file);
         }
+    }
 
-        function loadTasks() {
-            const saved = localStorage.getItem('tasks');
-            if (saved) {
-                tasks = JSON.parse(saved);
-            }
+    function exportTasks() {
+        const dataStr = JSON.stringify(tasks, null, 2);
+        const blob = new Blob([dataStr], { type: 'application/json' });
+        const url = URL.createObjectURL(blob);
+        const a = document.createElement('a');
+        a.href = url;
+        a.download = 'задачи_МУДРО.json';
+        a.click();
+        URL.revokeObjectURL(url);
+        showNotification('Задачи экспортированы!');
+    }
+
+    function importTasks(event) {
+        const file = event.target.files[0];
+        if (file) {
+            const reader = new FileReader();
+            reader.onload = function(e) {
+                try {
+                    tasks = JSON.parse(e.target.result);
+                    renderTasks();
+                    showNotification('Задачи импортированы!');
+                } catch (error) {
+                    alert('Ошибка при импорте файла!');
+                }
+            };
+            reader.readAsText(file);
+        }
+    }
+
+    function resetAll() {
+        if (confirm('Вы уверены, что хотите сбросить ВСЁ? Расписание и задачи будут удалены!')) {
+            schedule = JSON.parse(JSON.stringify(initialSchedule));
+            times = ['10:00', '11:00', '12:00', '13:00', '14:00', '15:00', '16:00', '17:00', '18:00'];
+            tasks = [];
+            localStorage.removeItem('schedule');
+            localStorage.removeItem('times');
+            localStorage.removeItem('tasks');
+            renderSchedule();
             renderTasks();
+            showNotification('Всё сброшено!');
         }
+    }
 
-        // Auto-save tasks
-        setInterval(saveTasks, 5000);
+    function showNotification(message) {
+        const notification = document.getElementById('notification');
+        notification.textContent = message;
+        notification.classList.add('show');
+        setTimeout(() => {
+            notification.classList.remove('show');
+        }, 3000);
+    }
 
-        // Initialize
-        loadSchedule();
-        loadTasks();
-    </script>
+    window.onclick = function(event) {
+        if (event.target.classList.contains('modal')) {
+            event.target.style.display = 'none';
+        }
+    }
+
+    function saveTasks() {
+        localStorage.setItem('tasks', JSON.stringify(tasks));
+    }
+
+    function loadTasks() {
+        const saved = localStorage.getItem('tasks');
+        if (saved) {
+            tasks = JSON.parse(saved);
+        }
+        renderTasks();
+    }
+
+    setInterval(saveTasks, 5000);
+
+    // Header
+    (function initHeader() {
+        const now = new Date();
+        const h = now.getHours();
+        const greet = h < 5 ? 'Доброй ночи' : h < 12 ? 'Доброе утро' : h < 18 ? 'Добрый день' : 'Добрый вечер';
+        document.getElementById('greeting').textContent = greet;
+        const capitalize = s => s.charAt(0).toUpperCase() + s.slice(1);
+        document.getElementById('currentDate').textContent = capitalize(now.toLocaleDateString('ru-RU', { weekday: 'long', day: 'numeric', month: 'long' }));
+    })();
+
+    loadSchedule();
+    loadTasks();
+</script>
 </body>
 </html>
