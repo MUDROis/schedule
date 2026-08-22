@@ -97,11 +97,110 @@
         resolveReady(user);
     });
 
+    // ============================================================
+    //  Ежедневное резервное копирование в 19:00.
+    //  Если страница открыта позже — бэкап выполняется догоняющим
+    //  запуском при первом открытии после 19:00.
+    //  Файл скачивается в «Загрузки», копия также хранится
+    //  в localStorage под ключом mudro.autoBackup.
+    // ============================================================
+    var BACKUP_HOUR = 19;
+    var LS_LAST = 'mudro.lastBackupAt';
+    var LS_SNAP = 'mudro.autoBackup';
+
+    function pad2(n) { return n < 10 ? '0' + n : '' + n; }
+
+    function collectBackup(role) {
+        var payload = { app: 'МУДРО', type: 'auto-backup', createdAt: new Date().toISOString(), role: role, data: {} };
+        var owners = role === 'anna' ? ['anna', 'tanya'] : ['tanya'];
+        var chain = Promise.resolve();
+        owners.forEach(function (o) {
+            chain = chain.then(function () {
+                return db.collection('schedules').doc(o).get().then(function (s) {
+                    var entry = {};
+                    if (s.exists) {
+                        var d = s.data();
+                        entry.schedule = d.schedule || {};
+                        entry.times = d.times || [];
+                    }
+                    return db.collection('tasks').doc(o).get().then(function (t) {
+                        if (t.exists) entry.tasks = (t.data() && t.data().tasks) || [];
+                        payload.data[o] = entry;
+                    });
+                }).catch(function () { payload.data[o] = {}; });
+            });
+        });
+        chain = chain.then(function () {
+            var q = role === 'anna'
+                ? db.collection('students')
+                : db.collection('students').where('owner', '==', 'tanya');
+            return q.get().then(function (qs) {
+                var arr = [];
+                qs.forEach(function (d) { var v = d.data(); v.id = d.id; arr.push(v); });
+                payload.students = arr;
+            }).catch(function () { payload.students = []; });
+        });
+        return chain.then(function () { return payload; });
+    }
+
+    function runDailyBackup(user) {
+        var role = roleOf(user);
+        if (!role) return Promise.reject(new Error('no role'));
+        return collectBackup(role).then(function (payload) {
+            var json = JSON.stringify(payload, null, 2);
+            try {
+                localStorage.setItem(LS_SNAP, json);
+                localStorage.setItem(LS_LAST, String(Date.now()));
+            } catch (e) {}
+            try {
+                var now = new Date();
+                var name = 'backup_МУДРО_' + now.getFullYear() + '-' + pad2(now.getMonth() + 1) + '-' + pad2(now.getDate()) + '.json';
+                var blob = new Blob([json], { type: 'application/json' });
+                var url = URL.createObjectURL(blob);
+                var a = document.createElement('a');
+                a.href = url;
+                a.download = name;
+                document.body.appendChild(a);
+                a.click();
+                a.remove();
+                setTimeout(function () { URL.revokeObjectURL(url); }, 5000);
+                if (typeof window.showNotification === 'function') {
+                    window.showNotification('Резервная копия создана: ' + name);
+                }
+            } catch (e) {
+                if (typeof window.showNotification === 'function') {
+                    window.showNotification('Копия сохранена локально (скачивание заблокировано браузером)');
+                }
+            }
+        });
+    }
+
+    function checkBackupTime() {
+        try {
+            var now = new Date();
+            var due = new Date(now.getFullYear(), now.getMonth(), now.getDate(), BACKUP_HOUR, 0, 0, 0);
+            var last = Number(localStorage.getItem(LS_LAST) || 0);
+            if (now.getTime() >= due.getTime() && last < due.getTime() && auth.currentUser) {
+                runDailyBackup(auth.currentUser).catch(console.error);
+            }
+        } catch (e) {}
+    }
+
     window.MudroAuth = {
         db: db,
         auth: auth,
         ready: ready,
         rolesConfigured: emailsConfigured(),
-        logout: function () { return auth.signOut(); }
+        logout: function () { return auth.signOut(); },
+        backupNow: function () {
+            return auth.currentUser
+                ? runDailyBackup(auth.currentUser)
+                : Promise.reject(new Error('not signed in'));
+        }
     };
+
+    ready.then(function () {
+        setTimeout(checkBackupTime, 15000);
+        setInterval(checkBackupTime, 60 * 1000);
+    });
 })();
