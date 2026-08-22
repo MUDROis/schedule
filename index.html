@@ -1133,6 +1133,16 @@
             vertical-align:middle;
         }
 
+        /* ===== Подтверждение наложения ===== */
+        .modal-confirm { max-width:430px; }
+        .confirm-text {
+            color:var(--muted);
+            font-size:.9em;
+            line-height:1.6;
+            margin:14px 0 20px;
+        }
+        .confirm-text b { color:var(--text); }
+
         /* ===== Модальные окна ===== */
         .modal {
             display:none;
@@ -1571,6 +1581,21 @@
     </div>
 </div>
 
+<!-- Предупреждение о наложении уроков -->
+<div id="overlapModal" class="modal">
+    <div class="modal-content modal-confirm">
+        <div class="modal-header">
+            <h2>Слот занят</h2>
+            <span class="close" onclick="cancelDrop()">&times;</span>
+        </div>
+        <p id="overlapText" class="confirm-text"></p>
+        <div class="form-actions" style="margin-bottom:0;">
+            <button type="button" onclick="cancelDrop()">Отмена</button>
+            <button type="button" class="btn-success" onclick="confirmDrop()">Продолжить</button>
+        </div>
+    </div>
+</div>
+
 <!-- Модалка учеников -->
 <div id="studentsModal" class="modal">
     <div class="modal-content">
@@ -1913,24 +1938,60 @@
         e.currentTarget.classList.remove('drag-over');
     }
 
+    let pendingDrop = null;
+
     function handleDrop(e) {
         e.preventDefault();
         e.currentTarget.classList.remove('drag-over');
 
-        const targetTime = e.currentTarget.dataset.time;
-        const targetDay = e.currentTarget.dataset.day;
-
         try {
             const data = JSON.parse(e.dataTransfer.getData('text/plain'));
-            const lesson = schedule[data.time][data.day];
-            schedule[targetTime][targetDay] = lesson;
-            schedule[data.time][data.day] = null;
-            persistSchedule();
-            renderSchedule();
-            showNotification('Занятие перемещено!');
+            requestMove(
+                { time: data.time, day: data.day },
+                { time: e.currentTarget.dataset.time, day: e.currentTarget.dataset.day }
+            );
         } catch (err) {
             console.error('Drop error:', err);
         }
+    }
+
+    function requestMove(from, to) {
+        if (!schedule[from.time] || !schedule[from.time][from.day]) return;
+        if (from.time === to.time && from.day === to.day) return;
+
+        const target = schedule[to.time] ? schedule[to.time][to.day] : undefined;
+        if (target) {
+            pendingDrop = { from: from, to: to };
+            const dayIdx = days.indexOf(to.day);
+            const when = (dayNames[dayIdx] || to.day) + ', ' + to.time;
+            document.getElementById('overlapText').innerHTML =
+                'На <b>' + when + '</b> уже есть урок: &laquo;<b>' + target.name + '</b>&raquo;.<br>' +
+                'Переместить карточку и заменить существующее занятие?';
+            document.getElementById('overlapModal').style.display = 'block';
+            return;
+        }
+        doMoveLesson(from, to);
+    }
+
+    function doMoveLesson(from, to) {
+        if (!schedule[to.time]) schedule[to.time] = {};
+        schedule[to.time][to.day] = schedule[from.time][from.day];
+        schedule[from.time][from.day] = null;
+        persistSchedule();
+        renderSchedule();
+        showNotification('Занятие перемещено!');
+    }
+
+    function confirmDrop() {
+        const p = pendingDrop;
+        pendingDrop = null;
+        closeModal('overlapModal');
+        if (p) doMoveLesson(p.from, p.to);
+    }
+
+    function cancelDrop() {
+        pendingDrop = null;
+        closeModal('overlapModal');
     }
 
     function openEditLessonModal(time, day) {
@@ -2490,6 +2551,39 @@
         });
     }
 
+    // ===== Стартовые данные Татьяны Александровны =====
+    const defaultTanyaTimes = ['09:00','10:30','11:20','12:00','13:00','14:00','15:00','16:00','17:00','18:00','19:00'];
+    const defaultTanyaSchedule = {
+        '09:00': { mon:null, tue:null, wed:null, thu:null, fri:null, sat:{ name:'Варвара С.', subject:'english', duration:50, type:'regular' } },
+        '10:30': { mon:null, tue:null, wed:null, thu:null, fri:null, sat:{ name:'Антонина Г.', subject:'english', duration:50, type:'regular' } },
+        '11:20': { mon:null, tue:null, wed:null, thu:null, fri:null, sat:{ name:'Антонина Г.', subject:'english', duration:30, type:'regular' } },
+        '12:00': { mon:null, tue:null, wed:null, thu:null, fri:null, sat:{ name:'Анастасия', subject:'german', duration:50, type:'regular' } },
+        '13:00': { mon:null, tue:{ name:'Елена Ли', subject:'english', duration:50, type:'regular' }, wed:null, thu:null, fri:null, sat:{ name:'Дарья С.', subject:'english', duration:50, type:'regular' } },
+        '14:00': { mon:{ name:'Асмик П.', subject:'english', duration:80, type:'regular' }, tue:{ name:'Софья Р., Милана З., Анастасия А.', subject:'english', duration:50, type:'regular' }, wed:{ name:'Анна Х.', subject:'english', duration:50, type:'regular' }, thu:{ name:'Софья Р., Милана З., Анастасия А.', subject:'english', duration:50, type:'regular' }, fri:{ name:'Анна Х.', subject:'english', duration:50, type:'regular' }, sat:null },
+        '15:00': { mon:null, tue:{ name:'Юлия Ч.', subject:'english', duration:50, type:'regular' }, wed:null, thu:{ name:'Юлия Ч.', subject:'english', duration:50, type:'regular' }, fri:null, sat:null },
+        '16:00': { mon:{ name:'Даниил, Даниел', subject:'english', duration:50, type:'regular' }, tue:null, wed:{ name:'Антонина Г.', subject:'english', duration:50, type:'regular' }, thu:{ name:'Асмик П.', subject:'english', duration:80, type:'regular' }, fri:{ name:'Даниил, Даниел', subject:'english', duration:50, type:'regular' }, sat:null },
+        '17:00': { mon:null, tue:{ name:'Варвара С.', subject:'english', duration:50, type:'regular' }, wed:{ name:'Дарья С.', subject:'english', duration:50, type:'regular' }, thu:null, fri:null, sat:null },
+        '18:00': { mon:null, tue:{ name:'Егор (Немецкий)', subject:'german', duration:50, type:'regular' }, wed:{ name:'Анастасия', subject:'german', duration:50, type:'regular' }, thu:null, fri:{ name:'Егор (Немецкий)', subject:'german', duration:50, type:'regular' }, sat:null },
+        '19:00': { mon:null, tue:{ name:'Егор (Английский)', subject:'english', duration:50, type:'regular' }, wed:null, thu:null, fri:{ name:'Егор (Английский)', subject:'english', duration:50, type:'regular' }, sat:null }
+    };
+    const defaultTanyaStudents = [
+        { name:'Варвара С.',      note:'9 кл' },
+        { name:'Антонина Г.',     note:'9 кл' },
+        { name:'Анастасия',       note:'Немецкий' },
+        { name:'Елена Ли',        note:'6 кл' },
+        { name:'Дарья С.',        note:'10 кл' },
+        { name:'Софья Р.',        note:'Группа 3 кл' },
+        { name:'Милана З.',       note:'Группа 3 кл' },
+        { name:'Анастасия А.',    note:'Группа 3 кл' },
+        { name:'Анна Х.',         note:'4 кл' },
+        { name:'Асмик П.',        note:'4 кл · формат 40+40 мин' },
+        { name:'Юлия Ч.',         note:'8 кл · подключается с 8 сентября' },
+        { name:'Даниил',          note:'Группа 7 кл' },
+        { name:'Даниел',          note:'Группа 7 кл' },
+        { name:'Егор (Немецкий)',   note:'' },
+        { name:'Егор (Английский)', note:'' }
+    ];
+
     // Первый запуск: если документов ещё нет — создаём.
     // Анне переносим данные из localStorage этого устройства, Татьяне — пустые.
     function seedOwnerDocs(owner) {
@@ -2515,8 +2609,23 @@
             }).catch(console.error);
             db.collection('tasks').doc('anna').set({ tasks: tData }).catch(console.error);
         } else {
-            db.collection('schedules').doc('tanya').set({ schedule: {}, times: [] }).catch(console.error);
+            db.collection('schedules').doc('tanya').set({
+                schedule: clone(defaultTanyaSchedule),
+                times: defaultTanyaTimes.slice()
+            }).catch(console.error);
             db.collection('tasks').doc('tanya').set({ tasks: [] }).catch(console.error);
+
+            let tanyaStudentsSeeded = false;
+            try { tanyaStudentsSeeded = !!localStorage.getItem('mudro.tanyaSeed'); } catch (e) {}
+            if (!tanyaStudentsSeeded && !students.length) {
+                const col = MudroAuth.db.collection('students');
+                const batch = MudroAuth.db.batch();
+                defaultTanyaStudents.forEach(s => batch.set(col.doc(), Object.assign(
+                    { phone: '', createdAt: Date.now(), owner: 'tanya' }, s)));
+                batch.commit().then(() => {
+                    try { localStorage.setItem('mudro.tanyaSeed', '1'); } catch (e) {}
+                }).catch(console.error);
+            }
         }
     }
 
@@ -2611,6 +2720,7 @@
 
         const byOwner = {};
         sources.forEach(o => {
+            if (o === 'tanya') return; // ученики Татьяны создаются готовым списком при первом запуске
             const sc = cloudStore[o].schedule || {};
             const set = byOwner[o] || (byOwner[o] = new Set());
             Object.values(sc).forEach(dayObj => {
@@ -2891,6 +3001,7 @@
     window.onclick = function(event) {
         if (event.target && event.target.classList && event.target.classList.contains('modal')) {
             event.target.style.display = 'none';
+            if (event.target.id === 'overlapModal') pendingDrop = null;
         }
     };
 
