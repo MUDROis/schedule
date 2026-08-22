@@ -1,8 +1,12 @@
-const CACHE_VERSION = 'mudro-v1';
+const CACHE_VERSION = 'mudro-v2';
 
 const PRECACHE = [
     './',
     './index.html',
+    './teacher.html',
+    './login.html',
+    './firebase-config.js',
+    './auth.js',
     './manifest.json',
     './favicon.svg',
     './icons/icon-192.png',
@@ -12,7 +16,7 @@ const PRECACHE = [
     './icons/apple-touch-icon.png'
 ];
 
-const CDN_ORIGINS = ['https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com'];
+const CDN_ORIGINS = ['https://cdn.jsdelivr.net', 'https://cdnjs.cloudflare.com', 'https://www.gstatic.com'];
 
 self.addEventListener('install', (event) => {
     event.waitUntil(
@@ -43,10 +47,10 @@ self.addEventListener('fetch', (event) => {
             fetch(request)
                 .then((response) => {
                     const copy = response.clone();
-                    caches.open(CACHE_VERSION).then((cache) => cache.put('./index.html', copy));
+                    caches.open(CACHE_VERSION).then((cache) => cache.put(request, copy));
                     return response;
                 })
-                .catch(() => caches.match('./index.html'))
+                .catch(() => caches.match(request, { ignoreSearch: true }).then((cached) => cached || caches.match('./index.html')))
         );
         return;
     }
