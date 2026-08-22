@@ -392,11 +392,11 @@
             gap:5px;
         }
 
-        .lesson-duration {
-            font-size:.65em;
+        .lesson-time .lesson-duration {
+            font-size:.85em;
             color:var(--faint);
-            margin-bottom:2px;
             font-weight:500;
+            white-space:nowrap;
         }
 
         .lesson-name {
@@ -881,6 +881,11 @@
         .filter-panel.open {
             display:block;
         }
+        .filter-panel-all {
+            border-bottom:1px solid var(--line);
+            color:var(--muted);
+            font-weight:600;
+        }
         .filter-panel-item {
             display:flex;
             align-items:center;
@@ -1298,7 +1303,7 @@
             .lesson-name { font-size:.88em; }
             .lesson-subject { font-size:.76em; }
             .lesson-time { font-size:.68em; }
-            .lesson-duration { font-size:.63em; margin-bottom:2px; }
+            .lesson-time .lesson-duration { font-size:.8em; }
             .lesson-type { font-size:.65em; padding:1px 6px; top:5px; right:5px; }
             .lesson-actions button { padding:3px 6px; font-size:11px; }
             .time-cell { font-size:.72em; padding:4px 2px; border-radius:8px; }
@@ -1359,8 +1364,8 @@
         <button class="btn-primary" onclick="openAddTimeModal()"><i class="fa-solid fa-plus"></i><span class="btn-text"> Добавить время</span></button>
         <button onclick="openStudentsModal()"><i class="fa-solid fa-user-group"></i><span class="btn-text"> Ученики</span></button>
         <button onclick="saveSchedule()"><i class="fa-solid fa-floppy-disk"></i><span class="btn-text"> Сохранить</span></button>
-        <button onclick="exportSchedule()"><i class="fa-solid fa-download"></i><span class="btn-text"> Экспорт</span></button>
-        <button onclick="document.getElementById('importScheduleFile').click()"><i class="fa-solid fa-upload"></i><span class="btn-text"> Импорт</span></button>
+        <button onclick="exportSchedule()"><i class="fa-solid fa-upload"></i><span class="btn-text"> Экспорт</span></button>
+        <button onclick="document.getElementById('importScheduleFile').click()"><i class="fa-solid fa-download"></i><span class="btn-text"> Импорт</span></button>
         <input type="file" id="importScheduleFile" style="display:none" accept=".json" onchange="importSchedule(event)">
         <button id="installBtn" style="display:none" onclick="installApp()"><i class="fa-solid fa-mobile-screen-button"></i><span class="btn-text"> Установить</span></button>
     </div>
@@ -1368,28 +1373,24 @@
     <!-- Фильтры расписания -->
     <div class="schedule-filters" id="scheduleFilters">
         <div class="filter-group">
-            <label>Ученик:</label>
             <div class="filter-trigger" onclick="toggleFilterPanel(this)" data-filter="student">
                 <span class="filter-label">Все</span><span class="arrow">▼</span>
             </div>
             <div class="filter-panel" id="filterPanelStudent"></div>
         </div>
         <div class="filter-group">
-            <label>Предмет:</label>
             <div class="filter-trigger" onclick="toggleFilterPanel(this)" data-filter="subject">
                 <span class="filter-label">Все</span><span class="arrow">▼</span>
             </div>
             <div class="filter-panel" id="filterPanelSubject"></div>
         </div>
         <div class="filter-group">
-            <label>День:</label>
             <div class="filter-trigger" onclick="toggleFilterPanel(this)" data-filter="day">
                 <span class="filter-label">Все</span><span class="arrow">▼</span>
             </div>
             <div class="filter-panel" id="filterPanelDay"></div>
         </div>
         <div class="filter-group">
-            <label>Время:</label>
             <div class="filter-trigger" onclick="toggleFilterPanel(this)" data-filter="time">
                 <span class="filter-label">Все</span><span class="arrow">▼</span>
             </div>
@@ -1442,8 +1443,8 @@
                 </div>
                 <button class="btn-primary" onclick="toggleTaskForm()"><i class="fa-solid fa-plus"></i><span class="btn-text"> Добавить задачу</span></button>
                 <button onclick="saveTasksToStorage()"><i class="fa-solid fa-floppy-disk"></i><span class="btn-text"> Сохранить</span></button>
-                <button onclick="exportTasks()"><i class="fa-solid fa-download"></i><span class="btn-text"> Экспорт</span></button>
-                <button onclick="document.getElementById('importTasksFile').click()"><i class="fa-solid fa-upload"></i><span class="btn-text"> Импорт</span></button>
+                <button onclick="exportTasks()"><i class="fa-solid fa-upload"></i><span class="btn-text"> Экспорт</span></button>
+                <button onclick="document.getElementById('importTasksFile').click()"><i class="fa-solid fa-download"></i><span class="btn-text"> Импорт</span></button>
                 <input type="file" id="importTasksFile" style="display:none" accept=".json" onchange="importTasks(event)">
             </div>
         </div>
@@ -1888,8 +1889,7 @@
 
         lessonEl.innerHTML = `
             <div class="lesson-type">${typeLabel}</div>
-            <div class="lesson-time">${time} — ${endTime}</div>
-            <div class="lesson-duration">${duration} мин</div>
+            <div class="lesson-time">${time} — ${endTime}<span class="lesson-duration">${duration} мин</span></div>
             <div class="lesson-name">${lesson.name}</div>
             <div class="lesson-subject">${getSubjectName(lesson.subject)}</div>
             <div class="lesson-actions">
@@ -2349,6 +2349,7 @@
     // ===== Schedule Filters =====
     let scheduleFilterState = { student: [], subject: [], day: [], time: [] };
 
+    const filterPlaceholders = { student: 'Ученик', subject: 'Предмет', day: 'День', time: 'Время' };
     const filterMeta = {
         student: { panelId: 'filterPanelStudent', items: [] },
         subject: {
@@ -2380,6 +2381,18 @@
         const meta = filterMeta[key];
         const panel = document.getElementById(meta.panelId);
         panel.innerHTML = '';
+        const allItem = document.createElement('label');
+        allItem.className = 'filter-panel-item filter-panel-all';
+        if (scheduleFilterState[key].length === 0) allItem.classList.add('selected');
+        allItem.innerHTML = '<span class="item-label"><b>Все</b></span>';
+        allItem.addEventListener('click', (e) => {
+            e.stopPropagation();
+            scheduleFilterState[key] = [];
+            updateFilterTrigger(key);
+            buildFilterPanel(key);
+            renderSchedule();
+        });
+        panel.appendChild(allItem);
         meta.items.forEach(item => {
             const div = document.createElement('label');
             div.className = 'filter-panel-item';
@@ -2422,7 +2435,7 @@
         if (existingBadge) existingBadge.remove();
 
         if (selected.length === 0) {
-            label.textContent = 'Все';
+            label.textContent = filterPlaceholders[key];
         } else {
             label.textContent = selected.map(v => {
                 const item = filterMeta[key].items.find(i => i.value === v);
