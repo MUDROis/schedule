@@ -145,7 +145,7 @@
 
     function runDailyBackup(user) {
         var role = roleOf(user);
-        if (!role) return Promise.reject(new Error('no role'));
+        if (role !== 'anna') return Promise.reject(new Error('backup is admin-only'));
         return collectBackup(role).then(function (payload) {
             var json = JSON.stringify(payload, null, 2);
             try {
@@ -177,10 +177,11 @@
 
     function checkBackupTime() {
         try {
+            if (roleOf(auth.currentUser) !== 'anna') return; // бэкап делает только админ
             var now = new Date();
             var due = new Date(now.getFullYear(), now.getMonth(), now.getDate(), BACKUP_HOUR, 0, 0, 0);
             var last = Number(localStorage.getItem(LS_LAST) || 0);
-            if (now.getTime() >= due.getTime() && last < due.getTime() && auth.currentUser) {
+            if (now.getTime() >= due.getTime() && last < due.getTime()) {
                 runDailyBackup(auth.currentUser).catch(console.error);
             }
         } catch (e) {}
@@ -257,9 +258,9 @@
         rolesConfigured: emailsConfigured(),
         logout: function () { return auth.signOut(); },
         backupNow: function () {
-            return auth.currentUser
+            return roleOf(auth.currentUser) === 'anna'
                 ? runDailyBackup(auth.currentUser)
-                : Promise.reject(new Error('not signed in'));
+                : Promise.reject(new Error('backup is admin-only'));
         },
         importBackupFile: importBackupFile
     };
