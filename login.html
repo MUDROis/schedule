@@ -221,6 +221,8 @@
                 card.style.display = '';
                 if (location.search.indexOf('denied=1') !== -1) {
                     showError('Этот аккаунт не имеет доступа.');
+                } else if (window.MudroAuth && !window.MudroAuth.rolesConfigured) {
+                    showError('Роли не настроены: заполните ROLE_EMAILS в firebase-config.js.');
                 }
             }
         });
@@ -249,6 +251,8 @@
                 else if (code === 'auth/user-not-found' || code === 'auth/wrong-password' || code === 'auth/invalid-credential') msg = 'Неверный email или пароль.';
                 else if (code === 'auth/too-many-requests') msg = 'Слишком много попыток входа. Подождите немного.';
                 else if (code === 'auth/network-request-failed') msg = 'Ошибка сети. Проверьте подключение.';
+                else if (code === 'auth/unauthorized-domain') msg = 'Домен не добавлен в Firebase: Authentication → Settings → Authorized domains.';
+                else if (code === 'auth/operation-not-allowed') msg = 'Вход по паролю выключен: включите Email/Password в Authentication → Sign-in method.';
                 showError(msg);
                 submitBtn.disabled = false;
             }

@@ -47,6 +47,16 @@
         return null;
     }
 
+    function emailsConfigured() {
+        return !!(emails.anna || emails.tanya);
+    }
+
+    function accessMessage() {
+        return emailsConfigured()
+            ? 'Этот аккаунт не имеет доступа к приложению.'
+            : 'Роли не настроены: заполните <b>ROLE_EMAILS</b> в файле firebase-config.js.';
+    }
+
     var resolveReady;
     var ready = new Promise(function (resolve) { resolveReady = resolve; });
 
@@ -60,7 +70,7 @@
                 location.replace(HOME[r0]);
             } else {
                 auth.signOut().then(function () {
-                    if (window.MudroLogin) window.MudroLogin.showError('Этот аккаунт не имеет доступа.');
+                    if (window.MudroLogin) window.MudroLogin.showError(accessMessage());
                 });
             }
             return;
@@ -74,7 +84,7 @@
 
         var role = roleOf(user);
         if (!role) {
-            showFatal('Этот аккаунт не имеет доступа к приложению.');
+            showFatal(accessMessage());
             auth.signOut();
             return;
         }
@@ -91,6 +101,7 @@
         db: db,
         auth: auth,
         ready: ready,
+        rolesConfigured: emailsConfigured(),
         logout: function () { return auth.signOut(); }
     };
 })();
