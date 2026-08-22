@@ -1,4 +1,4 @@
-<!DOCTYPE html>
+﻿<!DOCTYPE html>
 <html lang="ru">
 <head>
     <meta charset="UTF-8">
@@ -1120,6 +1120,16 @@
             align-items:flex-end;
             justify-content:flex-end;
             gap:8px;
+        }
+        .owner-badge {
+            margin-left:6px;
+            padding:1px 8px;
+            border-radius:999px;
+            background:rgba(255,180,84,.15);
+            color:var(--accent);
+            font-size:.72em;
+            font-weight:600;
+            vertical-align:middle;
         }
 
         /* ===== Модальные окна ===== */
@@ -2332,7 +2342,7 @@
     }
 
     function populateFilterDropdowns() {
-        const studentSet = new Set(students.map(s => s.name));
+        const studentSet = new Set(visibleStudents().map(s => s.name));
         Object.values(schedule).forEach(dayObj => {
             Object.values(dayObj).forEach(lesson => {
                 if (lesson && lesson.name) splitStudentNames(lesson.name).forEach(n => studentSet.add(n));
@@ -2445,6 +2455,7 @@
             cloudStore[owner].schedule = d.schedule && typeof d.schedule === 'object' ? d.schedule : {};
             cloudStore[owner].times = Array.isArray(d.times) ? d.times : [];
             cloudStore[owner].sReady = true;
+            trySeedStudents();
             const incoming = JSON.stringify(canon({ schedule: cloudStore[owner].schedule, times: cloudStore[owner].times }));
             if (!(owner === viewOwner && incoming === lastPushed.s)) maybeRender(owner);
         }, err => {
@@ -2554,8 +2565,15 @@
         return String(v).split(/\s*,\s*|\s+и\s+/).map(s => s.trim()).filter(Boolean);
     }
 
+    // Ученики выбранного человека: у админа зависит от переключателя расписаний
+    function visibleStudents() {
+        return IS_ADMIN ? students.filter(s => s.owner === viewOwner) : students;
+    }
+
     function subscribeStudents() {
-        MudroAuth.db.collection('students').onSnapshot(snap => {
+        let colQuery = MudroAuth.db.collection('students');
+        if (!IS_ADMIN) colQuery = colQuery.where('owner', '==', PAGE_OWNER);
+        colQuery.onSnapshot(snap => {
             students = snap.docs.map(d => Object.assign({ id: d.id }, d.data()));
             students.sort((a, b) => String(a.name || '').localeCompare(String(b.name || ''), 'ru'));
             const firstLoad = !studentsReady;
@@ -2577,20 +2595,24 @@
         if (!sources.every(o => cloudStore[o].sReady)) return; // ждём расписания
         studentsSeedTried = true;
 
-        const names = new Set();
+        const byOwner = {};
         sources.forEach(o => {
             const sc = cloudStore[o].schedule || {};
+            const set = byOwner[o] || (byOwner[o] = new Set());
             Object.values(sc).forEach(dayObj => {
                 Object.values(dayObj || {}).forEach(lesson => {
-                    if (lesson && lesson.name) splitStudentNames(lesson.name).forEach(n => names.add(n));
+                    if (lesson && lesson.name) splitStudentNames(lesson.name).forEach(n => set.add(n));
                 });
             });
         });
 
-        if (!names.size) return;
+        const total = Object.values(byOwner).reduce((sum, s) => sum + s.size, 0);
+        if (!total) return;
         const db = MudroAuth.db.collection('students');
-        const batch = db.firestore.batch();
-        names.forEach(n => batch.set(db.doc(), { name: n, phone: '', note: '', createdAt: Date.now() }));
+        const batch = MudroAuth.db.batch();
+        Object.keys(byOwner).forEach(o => {
+            byOwner[o].forEach(n => batch.set(db.doc(), { name: n, phone: '', note: '', createdAt: Date.now(), owner: o }));
+        });
         batch.commit().catch(console.error);
     }
 
@@ -2609,7 +2631,7 @@
                 await col.doc(editingStudentId).update({ name: name, phone: phone, note: note });
                 showNotification('Ученик обновлён!');
             } else {
-                await col.add({ name: name, phone: phone, note: note, createdAt: Date.now() });
+                await col.add({ name: name, phone: phone, note: note, createdAt: Date.now(), owner: (IS_ADMIN ? viewOwner : PAGE_OWNER) });
                 showNotification('Ученик добавлен!');
             }
             clearStudentForm();
@@ -2688,7 +2710,14 @@
                     '<button type="button" title="Редактировать"><i class="fa-solid fa-pen"></i></button>' +
                     '<button type="button" class="btn-del" title="Удалить"><i class="fa-solid fa-trash-can"></i></button>' +
                 '</div>';
-            row.querySelector('.student-name').textContent = st.name;
+            const nameEl = row.querySelector('.student-name');
+            nameEl.textContent = st.name;
+            if (IS_ADMIN && st.owner && OWNER_LABELS[st.owner]) {
+                const badge = document.createElement('span');
+                badge.className = 'owner-badge';
+                badge.textContent = OWNER_LABELS[st.owner].split(' ')[0];
+                nameEl.appendChild(badge);
+            }
             if (meta) row.querySelector('.student-meta').textContent = meta;
             row.querySelector('.student-actions button').addEventListener('click', () => editStudent(st.id));
             row.querySelector('.btn-del').addEventListener('click', () => deleteStudent(st.id));
@@ -2712,7 +2741,7 @@
         if (!students.length) return;
 
         const current = splitStudentNames(input.value);
-        students.forEach(st => {
+        visibleStudents().forEach(st => {
             const b = document.createElement('button');
             b.type = 'button';
             b.className = 'chip' + (current.includes(st.name) ? ' on' : '');
