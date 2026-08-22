@@ -1,4 +1,4 @@
-const CACHE_VERSION = 'mudro-v5';
+const CACHE_VERSION = 'mudro-v6';
 
 const PRECACHE = [
     './',
