@@ -2509,8 +2509,10 @@
         const db = MudroAuth.db;
 
         db.collection('schedules').doc(owner).onSnapshot(snap => {
-            if (!snap.exists) { seedOwnerDocs(owner); return; }
-            const d = snap.data();
+            const d0 = snap.exists ? snap.data() : null;
+            // Нет документа ИЛИ пусто и ещё ни разу не заполнялось — создаём стартовые данные
+            if (!d0 || (!d0.seededAt && !(d0.schedule && Object.keys(d0.schedule).length))) { seedOwnerDocs(owner); return; }
+            const d = d0;
             cloudStore[owner].schedule = d.schedule && typeof d.schedule === 'object' ? d.schedule : {};
             cloudStore[owner].times = Array.isArray(d.times) ? d.times : [];
             cloudStore[owner].sReady = true;
@@ -2529,7 +2531,8 @@
         });
 
         db.collection('tasks').doc(owner).onSnapshot(snap => {
-            if (!snap.exists) { seedOwnerDocs(owner); return; }
+            const d0t = snap.exists ? snap.data() : null;
+            if (!d0t || (!d0t.seededAt && !(Array.isArray(d0t.tasks) && d0t.tasks.length))) { seedOwnerDocs(owner); return; }
             const d = snap.data();
             cloudStore[owner].tasks = Array.isArray(d.tasks) ? d.tasks : [];
             cloudStore[owner].tReady = true;
@@ -2601,19 +2604,21 @@
             }
             db.collection('schedules').doc('anna').set({
                 schedule: sData,
-                times: Array.isArray(tSeed) ? tSeed : Object.keys(sData).sort()
+                times: Array.isArray(tSeed) ? tSeed : Object.keys(sData).sort(),
+                seededAt: Date.now()
             }).catch(console.error);
-            db.collection('tasks').doc('anna').set({ tasks: tData }).catch(console.error);
+            db.collection('tasks').doc('anna').set({ tasks: tData, seededAt: Date.now() }).catch(console.error);
         } else {
             db.collection('schedules').doc('tanya').set({
                 schedule: clone(defaultTanyaSchedule),
-                times: defaultTanyaTimes.slice()
+                times: defaultTanyaTimes.slice(),
+                seededAt: Date.now()
             }).catch(console.error);
-            db.collection('tasks').doc('tanya').set({ tasks: [] }).catch(console.error);
+            db.collection('tasks').doc('tanya').set({ tasks: [], seededAt: Date.now() }).catch(console.error);
 
             let tanyaStudentsSeeded = false;
             try { tanyaStudentsSeeded = !!localStorage.getItem('mudro.tanyaSeed'); } catch (e) {}
-            if (!tanyaStudentsSeeded && !students.length) {
+            if (!tanyaStudentsSeeded && !students.some(s => s.owner === 'tanya')) {
                 const col = MudroAuth.db.collection('students');
                 const batch = MudroAuth.db.batch();
                 defaultTanyaStudents.forEach(s => batch.set(col.doc(), Object.assign(
@@ -2635,9 +2640,9 @@
             const db = MudroAuth.db;
             let promise;
             if (kind === 's') {
-                promise = db.collection('schedules').doc(viewOwner).set({ schedule: schedule, times: times });
+                promise = db.collection('schedules').doc(viewOwner).set({ schedule: schedule, times: times, seededAt: Date.now() });
             } else {
-                promise = db.collection('tasks').doc(viewOwner).set({ tasks: tasks });
+                promise = db.collection('tasks').doc(viewOwner).set({ tasks: tasks, seededAt: Date.now() });
             }
             promise.catch(err => {
                 console.error(err);
