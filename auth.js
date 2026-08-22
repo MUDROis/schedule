@@ -186,6 +186,70 @@
         } catch (e) {}
     }
 
+    // ===== Восстановление из файла бэкапа (кнопка видна только админу) =====
+    function restorePayload(payload) {
+        var owners = Object.keys(payload.data || {});
+        var chain = Promise.resolve();
+        owners.forEach(function (o) {
+            var d = payload.data[o] || {};
+            chain = chain.then(function () {
+                return db.collection('schedules').doc(o).set({
+                    schedule: d.schedule || {},
+                    times: Array.isArray(d.times) ? d.times : Object.keys(d.schedule || {}),
+                    seededAt: Date.now()
+                });
+            }).then(function () {
+                return db.collection('tasks').doc(o).set({
+                    tasks: Array.isArray(d.tasks) ? d.tasks : [],
+                    seededAt: Date.now()
+                });
+            }).catch(function (err) { console.error('restore ' + o, err); });
+        });
+        if (Array.isArray(payload.students)) {
+            chain = chain.then(function () {
+                var col = db.collection('students');
+                var batch = db.batch();
+                payload.students.forEach(function (s) {
+                    var id = s.id || col.doc().id;
+                    var copy = {};
+                    Object.keys(s).forEach(function (k) { if (k !== 'id') copy[k] = s[k]; });
+                    if (!copy.owner) copy.owner = 'tanya';
+                    batch.set(col.doc(id), copy);
+                });
+                return batch.commit().catch(function (err) { console.error('restore students', err); });
+            });
+        }
+        return chain;
+    }
+
+    function importBackupFile(input) {
+        var file = input && input.files && input.files[0];
+        if (input) input.value = '';
+        if (!file || !auth.currentUser) return;
+        if (!confirm('Восстановить данные из файла «' + file.name + '»?\n\nРасписания, задачи и ученики будут перезаписаны данными из бэкапа.')) return;
+        var reader = new FileReader();
+        reader.onload = function (e) {
+            var payload;
+            try { payload = JSON.parse(e.target.result); }
+            catch (err) { alert('Не удалось прочитать файл: это не JSON.'); return; }
+            if (!payload || payload.type !== 'auto-backup' || !payload.data) {
+                alert('Файл не похож на резервную копию МУДРО.');
+                return;
+            }
+            restorePayload(payload)
+                .then(function () {
+                    if (typeof window.showNotification === 'function') {
+                        window.showNotification('Данные восстановлены из бэкапа!');
+                    }
+                })
+                .catch(function (err) {
+                    console.error(err);
+                    alert('Ошибка восстановления: ' + err.message);
+                });
+        };
+        reader.readAsText(file, 'utf8');
+    }
+
     window.MudroAuth = {
         db: db,
         auth: auth,
@@ -196,10 +260,13 @@
             return auth.currentUser
                 ? runDailyBackup(auth.currentUser)
                 : Promise.reject(new Error('not signed in'));
-        }
+        },
+        importBackupFile: importBackupFile
     };
 
-    ready.then(function () {
+    ready.then(function (user) {
+        var bar = document.getElementById('backupImportBar');
+        if (bar && roleOf(user) === 'anna') bar.style.display = 'block';
         setTimeout(checkBackupTime, 15000);
         setInterval(checkBackupTime, 60 * 1000);
     });

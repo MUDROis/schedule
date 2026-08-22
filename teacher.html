@@ -1628,6 +1628,12 @@
 
 <div class="notification" id="notification"></div>
 
+<!-- Восстановление из резервной копии (только админ; показывается через auth.js) -->
+<div id="backupImportBar" style="display:none;text-align:center;padding:6px 0 28px;">
+    <input type="file" id="backupRestoreFile" accept=".json" style="display:none" onchange="MudroAuth.importBackupFile(this)">
+    <button type="button" onclick="document.getElementById('backupRestoreFile').click()" style="background:none;border:1px solid var(--line);border-radius:8px;color:var(--faint);font-family:inherit;font-size:.78em;padding:6px 14px;cursor:pointer;transition:border-color .2s,color .2s;"><i class="fa-solid fa-upload"></i>&nbsp;Восстановить из бэкапа</button>
+</div>
+
 <!-- Экран проверки входа -->
 <div id="authGate">
     <div class="gate-card"><div class="gate-spinner"></div><p>Проверка доступа…</p></div>
