@@ -2437,6 +2437,7 @@
         const st = cloudStore[viewOwner];
         schedule = st.schedule ? clone(st.schedule) : {};
         times = Array.isArray(st.times) ? clone(st.times).sort() : [];
+        tasks = Array.isArray(st.tasks) ? clone(st.tasks) : [];
     }
 
     function maybeRender(owner) {
