@@ -1,0 +1,512 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <title>Расписание МУДРО — Татьяна Александровна</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/golos-text@5/400.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/golos-text@5/500.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/golos-text@5/600.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/unbounded@5/600.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/unbounded@5/800.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <link rel="manifest" href="manifest.json">
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <link rel="apple-touch-icon" href="icons/apple-touch-icon.png">
+    <meta name="theme-color" content="#0a0d13">
+    <meta name="mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-status-bar-style" content="black-translucent">
+    <meta name="apple-mobile-web-app-title" content="МУДРО">
+
+    <link rel="stylesheet" href="app.css">
+</head>
+<body>
+
+<div class="orb orb-a" aria-hidden="true"></div>
+<div class="orb orb-b" aria-hidden="true"></div>
+
+<main class="app" id="app" style="display:none;">
+
+    <!-- Шапка -->
+    <header class="head">
+        <div class="logo" aria-hidden="true">
+            <svg width="22" height="22" viewBox="0 0 24 24" fill="none" stroke="#221403" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+        </div>
+        <div class="head-text">
+            <h1>Расписание МУДРО</h1>
+            <p class="head-sub"><b id="greeting"></b> · <span id="currentDate"></span><span id="viewBadge"></span></p>
+        </div>
+        <div class="notif-wrapper">
+            <div class="notif-dot" id="notifDot" title="Нет уведомлений"></div>
+            <div class="ring" id="ring" role="img" aria-label="Заполненность расписания">
+                <div class="ring-core"><b id="ringPct">0%</b><small>занято</small></div>
+            </div>
+        </div>
+        <button type="button" class="btn-logout" onclick="mudroLogout()" title="Выйти из аккаунта"><i class="fa-solid fa-right-from-bracket"></i></button>
+    </header>
+
+    <!-- Кнопки управления -->
+    <div class="controls">
+        <button class="btn-primary" onclick="openAddLessonModal()"><i class="fa-solid fa-plus"></i><span class="btn-text"> Добавить урок</span></button>
+        <button onclick="openStudentsModal()"><i class="fa-solid fa-user-group"></i><span class="btn-text"> Ученики</span></button>
+        <button onclick="openGroupsModal()"><i class="fa-solid fa-layer-group"></i><span class="btn-text"> Группы</span></button>
+        <button onclick="exportSchedule()" title="Экспорт"><i class="fa-solid fa-upload"></i></button>
+        <button onclick="document.getElementById('importScheduleFile').click()" title="Импорт"><i class="fa-solid fa-download"></i></button>
+        <input type="file" id="importScheduleFile" style="display:none" accept=".json" onchange="importSchedule(event)">
+        <button id="installBtn" style="display:none" onclick="installApp()"><i class="fa-solid fa-mobile-screen-button"></i><span class="btn-text"> Установить</span></button>
+    </div>
+
+    <!-- Фильтры расписания -->
+    <div class="schedule-filters" id="scheduleFilters">
+        <div class="filter-group">
+            <div class="filter-trigger" onclick="toggleFilterPanel(this)" data-filter="student">
+                <span class="filter-label">Ученик</span><span class="arrow">▼</span>
+            </div>
+            <div class="filter-panel" id="filterPanelStudent"></div>
+        </div>
+        <div class="filter-group">
+            <div class="filter-trigger" onclick="toggleFilterPanel(this)" data-filter="subject">
+                <span class="filter-label">Предмет</span><span class="arrow">▼</span>
+            </div>
+            <div class="filter-panel" id="filterPanelSubject"></div>
+        </div>
+        <div class="filter-group">
+            <div class="filter-trigger" onclick="toggleFilterPanel(this)" data-filter="day">
+                <span class="filter-label">День</span><span class="arrow">▼</span>
+            </div>
+            <div class="filter-panel" id="filterPanelDay"></div>
+        </div>
+        <div class="filter-group">
+            <div class="filter-trigger" onclick="toggleFilterPanel(this)" data-filter="time">
+                <span class="filter-label">Время</span><span class="arrow">▼</span>
+            </div>
+            <div class="filter-panel" id="filterPanelTime"></div>
+        </div>
+        <button class="btn-reset-filters" onclick="resetScheduleFilters()">Сбросить</button>
+    </div>
+
+    <!-- Навигация по неделям -->
+    <div class="week-nav">
+        <div class="week-range" id="weekRange"></div>
+        <div class="week-nav-controls">
+            <button type="button" id="prevWeekBtn" title="Предыдущая неделя">&lt;</button>
+            <button type="button" id="nextWeekBtn" title="Следующая неделя">&gt;</button>
+            <button type="button" id="todayBtn" title="Текущая неделя">Сегодня</button>
+        </div>
+    </div>
+    <!-- Сетка расписания -->
+    <div class="day-selector" id="daySelector"></div>
+    <div class="schedule-container" id="scheduleContainer">
+        <div class="schedule-grid" id="scheduleGrid"></div>
+    </div>
+
+    <!-- Легенда -->
+    <div class="legend">
+        <div class="legend-item">
+            <div class="legend-color" style="border-left-color:var(--c-english)"></div>
+            <span>Английский</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="border-left-color:var(--c-spanish)"></div>
+            <span>Испанский</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="border-left-color:var(--c-french)"></div>
+            <span>Французский</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="border-left-color:var(--c-german)"></div>
+            <span>Немецкий</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="border-left-color:var(--c-russian)"></div>
+            <span>Русский</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="border-left-color:var(--c-math)"></div>
+            <span>Математика</span>
+        </div>
+        <div class="legend-item">
+            <div class="legend-color" style="border-left-color:var(--c-break)"></div>
+            <span>Перерыв</span>
+        </div>
+    </div>
+
+    <!-- Отменённые уроки -->
+    <div class="cancelled-bar" id="cancelledBar" style="display:none" onclick="openCancelledModal()">
+        <i class="fa-solid fa-ban"></i> Отменённые <span class="cancelled-count" id="cancelledCount">0</span>
+    </div>
+
+    <!-- Трекер задач -->
+    <div class="tracker-section">
+        <div class="tracker-header">
+            <h2>Трекер задач</h2>
+            <div class="tracker-controls">
+                <div class="mini-ring ring-completed" id="ringCompleted" role="img" aria-label="Выполнение задач">
+                    <div class="mini-ring-core"><b id="ringCompletedPct">0%</b><small>выполнено</small></div>
+                </div>
+                <button class="btn-primary" onclick="toggleTaskForm()"><i class="fa-solid fa-plus"></i><span class="btn-text"> Добавить задачу</span></button>
+                <button onclick="exportTasks()" title="Экспорт задач"><i class="fa-solid fa-upload"></i></button>
+                <button onclick="document.getElementById('importTasksFile').click()" title="Импорт задач"><i class="fa-solid fa-download"></i></button>
+                <input type="file" id="importTasksFile" style="display:none" accept=".json" onchange="importTasks(event)">
+            </div>
+        </div>
+
+        <div class="task-input-form" id="taskForm">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Название задачи *</label>
+                    <input type="text" id="taskTitle" placeholder="Что нужно сделать?" required>
+                </div>
+                <div class="form-group">
+                    <label>Приоритет</label>
+                    <select id="taskPriority">
+                        <option value="low">Низкий</option>
+                        <option value="medium" selected>Средний</option>
+                        <option value="high">Высокий</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Срок выполнения</label>
+                    <input type="date" id="taskDeadline">
+                </div>
+                <div class="form-group">
+                    <label>Описание</label>
+                    <input type="text" id="taskDescription" placeholder="Дополнительная информация">
+                </div>
+            </div>
+            <div class="form-actions">
+                <button onclick="toggleTaskForm()">Отмена</button>
+                <button class="btn-success" onclick="saveTask()">Сохранить</button>
+            </div>
+        </div>
+
+        <div class="filter-buttons" id="filterButtons">
+            <button class="active" onclick="filterTasks('all', this)">Все</button>
+            <button onclick="filterTasks('active', this)">Активные</button>
+            <button onclick="filterTasks('completed', this)">Готово</button>
+        </div>
+
+        <div class="task-list" id="taskList">
+            <div class="empty-state">
+                <div class="empty-state-icon">📋</div>
+                <div>Задач пока нет</div>
+                <div>Двойной клик — редактировать · перетаскивание — менять порядок</div>
+            </div>
+        </div>
+
+        <div style="margin-top:12px; display:none;" id="clearDoneWrap">
+            <button class="btn-ghost" onclick="clearCompleted()">Очистить выполненные</button>
+        </div>
+    </div>
+
+</main>
+
+<!-- Кнопки отчётов внизу страницы -->
+<div class="bottom-reports-bar" id="bottomReportsBar">
+    <button type="button" onclick="openTeacherReportModal()" title="Отчёт по проведённым занятиям учителя"><i class="fa-solid fa-user-tie"></i>&nbsp;Отчёты по учителям</button>
+</div>
+
+<!-- Модалка урока -->
+<div id="lessonModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="modalTitle">Редактировать занятие</h2>
+            <span class="close" onclick="closeModal('lessonModal')">&times;</span>
+        </div>
+        <form id="lessonForm">
+            <input type="hidden" id="editOccKey">
+            <input type="hidden" id="editMode">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Время начала *</label>
+                    <input type="time" id="lessonStartTime" required>
+                </div>
+                <div class="form-group">
+                    <label>Продолжительность (мин) *</label>
+                    <input type="number" id="lessonDuration" required min="15" max="180" step="5" value="50">
+                <datalist id="durationPresets"><option value="30"><option value="45"><option value="50"><option value="60"></datalist>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Имя ученика(ов) <span id="breakNameStar">*</span></label>
+                <div class="select-wrap">
+                    <input type="text" id="studentName" required placeholder="Выберите из списка или введите имена" oninput="var dd=document.getElementById('studentDropdown');dd.style.display='block';renderStudentDropdown(this.value);">
+                    <span class="dd-arrow" onclick="toggleStudentDropdown()" title="Список учеников">&#9662;</span>
+                    <div class="filter-panel student-dropdown" id="studentDropdown" style="display:none;"></div>
+                </div>
+                <div id="breakNameHint" style="display:none;margin-top:4px;font-size:.75em;color:var(--muted);">Имя можно не указывать — это слот занят перерывом.</div>
+            </div>
+            <div class="form-group">
+                <label>Предмет *</label>
+                <select id="subject" required>
+                    <option value="english">Английский</option>
+                    <option value="spanish">Испанский</option>
+                    <option value="french">Французский</option>
+                    <option value="german">Немецкий</option>
+                    <option value="russian">Русский</option>
+                    <option value="math">Математика</option>
+                    <option value="break">Перерыв</option>
+                </select>
+            </div>
+            <div class="form-group">
+                <label>Дни недели *</label>
+                <div class="day-picker" id="dayPicker"></div>
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Начало периода</label>
+                    <input type="date" id="periodStart">
+                </div>
+                <div class="form-group">
+                    <label>Конец периода</label>
+                    <input type="date" id="periodEnd">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Тип урока</label>
+                <select id="lessonType">
+                    <option value="regular" selected>Регулярный</option>
+                    <option value="once">Р - разовый</option>
+                    <option value="reschedule">П - перенос</option>
+                    <option value="cancelled">О - отмена</option>
+                </select>
+            </div>
+            <div class="form-group" id="lessonCommentGroup" style="display:none;">
+                <label>Комментарий (проведение)</label>
+                <textarea id="lessonComment" rows="2" placeholder="Заметка о проведении урока"></textarea>
+            </div>
+            <div class="form-group">
+                <label>Ссылка Онлайн</label>
+                <input type="url" id="lessonOnlineLink" placeholder="https://...">
+            </div>
+            <div id="scopeBox" style="display:none;">
+                <div class="form-group">
+                    <label>Применить к:</label>
+                    <label class="scope-option"><input type="radio" name="scope" value="one" checked> Только этот урок</label>
+                    <label class="scope-option"><input type="radio" name="scope" value="following"> Этот и все последующие</label>
+                    <label class="scope-option"><input type="radio" name="scope" value="all"> Все уроки этого правила</label>
+                </div>
+            </div>
+            <div class="form-actions">
+                <button type="button" class="btn-danger" id="deleteLessonBtn" onclick="deleteLessonFromModal()">Удалить</button>
+                <button type="button" onclick="closeModal('lessonModal')">Отмена</button>
+                <button type="submit" class="btn-primary">Сохранить</button>
+            </div>
+        </form>
+    </div>
+</div>
+
+
+
+<!-- Предупреждение о наложении уроков -->
+<div id="overlapModal" class="modal">
+    <div class="modal-content modal-confirm">
+        <div class="modal-header">
+            <h2>Слот занят</h2>
+            <span class="close" onclick="cancelDrop()">&times;</span>
+        </div>
+        <p id="overlapText" class="confirm-text"></p>
+        <div class="form-actions" style="margin-bottom:0;">
+            <button type="button" onclick="cancelDrop()">Отмена</button>
+            <button type="button" class="btn-success" onclick="confirmDrop()">Продолжить</button>
+        </div>
+    </div>
+</div>
+
+<!-- Модалка учеников -->
+<div id="studentsModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="studentsModalTitle">Ученики</h2>
+            <span class="close" onclick="closeModal('studentsModal')">&times;</span>
+        </div>
+        <div class="students-toolbar">
+            <button type="button" class="btn-primary" id="studentAddBtn" onclick="toggleStudentForm(true)"><i class="fa-solid fa-plus"></i> Добавить ученика</button>
+            <button type="button" class="btn-ghost" id="studentArchiveToggleBtn" onclick="toggleStudentArchiveView()"><i class="fa-solid fa-box-archive"></i> Архив</button>
+        </div>
+        <form id="studentForm" style="display:none;">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Имя *</label>
+                    <input type="text" id="studentNameInput" placeholder="Например: Злата" required>
+                </div>
+                <div class="form-group">
+                    <label>Группа</label>
+                    <select id="studentGroupInput">
+                        <option value="">— не в группе —</option>
+                    </select>
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Предмет</label>
+                <div class="subject-chips" id="studentSubjectsBox"></div>
+            </div>
+            <div class="form-group">
+                <label>Заметка</label>
+                <input type="text" id="studentNoteInput" placeholder="Предметы, особенности…">
+            </div>
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Ссылка Онлайн</label>
+                    <input type="url" id="studentOnlineInput" placeholder="https://...">
+                </div>
+                <div class="form-group">
+                    <label>Ссылка Группа</label>
+                    <input type="url" id="studentGroupLinkInput" placeholder="https://...">
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-actions student-form-actions">
+                    <button type="button" class="btn-ghost" id="studentArchiveBtn" style="display:none;" onclick="toggleStudentArchive()">В архив</button>
+                    <button type="button" onclick="closeStudentForm()" id="studentCancelBtn">Отмена</button>
+                    <button type="submit" class="btn-success" id="studentSaveBtn">Добавить</button>
+                </div>
+            </div>
+        </form>
+        <div class="students-list" id="studentsList"></div>
+        <div class="merge-bar" id="mergeBar" style="display:none;">
+            <input type="text" id="mergeName" placeholder="Каноническое имя">
+            <button type="button" class="btn-success" onclick="confirmMergeStudents()">Объединить</button>
+            <button type="button" onclick="toggleMergeMode(false)">Отмена</button>
+        </div>
+        <button type="button" class="btn-ghost" id="mergeToggleBtn" onclick="toggleMergeMode(true)" style="width:100%;margin-top:8px;">🔗 Объединить дубликаты</button>
+    </div>
+</div>
+
+<!-- Модалка групп -->
+<div id="groupsModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2 id="groupsModalTitle">Группы</h2>
+            <span class="close" onclick="closeModal('groupsModal')">&times;</span>
+        </div>
+        <div class="students-toolbar">
+            <button type="button" class="btn-primary" id="groupAddBtn" onclick="toggleGroupForm(true)"><i class="fa-solid fa-plus"></i> Добавить группу</button>
+        </div>
+        <form id="groupForm" style="display:none;">
+            <div class="form-row">
+                <div class="form-group">
+                    <label>Название *</label>
+                    <input type="text" id="groupNameInput" placeholder="Например: Группа А1" required>
+                </div>
+                <div class="form-group">
+                    <label>Ссылка</label>
+                    <input type="url" id="groupLinkInput" placeholder="https://...">
+                </div>
+            </div>
+            <div class="form-group">
+                <label>Ученики</label>
+                <div class="select-wrap">
+                    <input type="text" id="groupStudentsInput" placeholder="Выберите из списка или введите имена" oninput="var dd=document.getElementById('groupStudentsDropdown');dd.style.display='block';renderGroupStudentsPicker();">
+                    <span class="dd-arrow" onclick="toggleGroupStudentsDropdown()" title="Список учеников">&#9662;</span>
+                    <div class="filter-panel student-dropdown" id="groupStudentsDropdown" style="display:none;"></div>
+                </div>
+            </div>
+            <div class="form-row">
+                <div class="form-actions student-form-actions">
+                    <button type="button" onclick="closeGroupForm()" id="groupCancelBtn">Отмена</button>
+                    <button type="submit" class="btn-success" id="groupSaveBtn">Добавить</button>
+                </div>
+            </div>
+        </form>
+        <div class="groups-list" id="groupsList"></div>
+    </div>
+</div>
+
+<!-- Модалка уведомлений -->
+<div id="notifModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Уведомления</h2>
+            <span class="close" onclick="closeNotificationModal()">&times;</span>
+        </div>
+        <div class="notif-list" id="notifList"></div>
+    </div>
+</div>
+
+<div class="notification" id="notification"></div>
+
+<!-- Восстановление из резервной копии (только админ; показывается через auth.js) -->
+<div id="backupImportBar" style="display:none;text-align:center;padding:6px 0 28px;">
+    <input type="file" id="backupRestoreFile" accept=".json" style="display:none" onchange="MudroAuth.importBackupFile(this)">
+    <button type="button" onclick="document.getElementById('backupRestoreFile').click()" style="background:none;border:1px solid var(--line);border-radius:8px;color:var(--faint);font-family:inherit;font-size:.78em;padding:6px 14px;cursor:pointer;transition:border-color .2s,color .2s;"><i class="fa-solid fa-download"></i>&nbsp;Восстановить из бэкапа</button>
+</div>
+
+<!-- Экран проверки входа -->
+<div id="authGate">
+    <div class="gate-card"><div class="gate-spinner"></div><p>Проверка доступа…</p></div>
+</div>
+
+<div id="conductModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeConductModal()">&times;</span>
+        <h2>Проведение урока</h2>
+        <div class="conduct-student" id="conductStudent"></div>
+        <div class="form-group">
+            <label>Комментарий</label>
+            <textarea id="conductComment" rows="3" placeholder="Как прошёл урок?"></textarea>
+        </div>
+        <div class="form-actions">
+            <button type="button" onclick="closeConductModal()">Отмена</button>
+            <button type="button" class="btn-primary" onclick="saveConduct()">Сохранить</button>
+        </div>
+    </div>
+</div>
+<div id="cancelledModal" class="modal">
+    <div class="modal-content">
+        <span class="close" onclick="closeModal('cancelledModal')">&times;</span>
+        <h2>Отменённые уроки</h2>
+        <div class="cancelled-list" id="cancelledList"></div>
+    </div>
+</div>
+<div id="teacherReportModal" class="modal">
+    <div class="modal-content">
+        <div class="modal-header">
+            <h2>Отчёт по учителю</h2>
+            <span class="close" onclick="closeModal('teacherReportModal')">&times;</span>
+        </div>
+        <div class="form-group">
+            <label>Учитель *</label>
+            <select id="teacherReportSelect" required>
+                <option value="">— выберите учителя —</option>
+            </select>
+        </div>
+        <div class="form-row">
+            <div class="form-group">
+                <label>С</label>
+                <input type="date" id="teacherReportFrom">
+            </div>
+            <div class="form-group">
+                <label>по</label>
+                <input type="date" id="teacherReportTo">
+            </div>
+        </div>
+        <div class="form-actions">
+            <button type="button" onclick="closeModal('teacherReportModal')">Отмена</button>
+            <button type="button" class="btn-primary" onclick="downloadTeacherReport()"><i class="fa-solid fa-download"></i>&nbsp;Скачать</button>
+        </div>
+    </div>
+</div>
+<button id="themeToggle" class="theme-toggle" title="Переключить тему" aria-pressed="false">
+    <span class="tt-icon">☀️</span>
+</button>
+<script>
+    window.__PAGE__ = { kind: 'app', owner: 'tanya', admin: false };
+</script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="auth.js"></script>
+<script src="core.js"></script>
+<script src="app.js"></script>
+<script src="https://cdnjs.cloudflare.com/ajax/libs/xlsx/0.18.5/xlsx.full.min.js"></script>
+</body>
+</html>
