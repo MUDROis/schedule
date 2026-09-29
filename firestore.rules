@@ -1,0 +1,103 @@
+rules_version = '2';
+
+// ============================================================
+//  Правила доступа Firestore.
+//  Перед публикацией замените ANNA_EMAIL и TANYA_EMAIL на
+//  реальные адреса и вставьте текст в Firebase Console →
+//  Firestore Database → Rules → Publish.
+// ============================================================
+service cloud.firestore {
+  match /databases/{database}/documents {
+
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function userEmail() {
+      return signedIn() ? request.auth.token.email.lower() : '';
+    }
+
+    function isAdmin() {
+      return userEmail() == 'mudro.is@yandex.ru';
+    }
+
+    function isTeacher() {
+      return userEmail() == 'english.i.s@yandex.ru';
+    }
+
+    // Расписания: документы anna и tanya ({schedule, times})
+    match /schedules/{owner} {
+      allow get, list: if isAdmin() || (isTeacher() && owner == 'tanya');
+      allow create, update: if isAdmin() || (isTeacher() && owner == 'tanya');
+      allow delete: if false;
+    }
+
+    // Задачи: документы anna и tanya ({tasks})
+    match /tasks/{owner} {
+      allow get, list: if isAdmin() || (isTeacher() && owner == 'tanya');
+      allow create, update: if isAdmin() || (isTeacher() && owner == 'tanya');
+      allow delete: if false;
+    }
+
+    // Ученики: у каждой из преподавателей свои
+    // ({name, phone, note, owner, createdAt})
+    match /students/{doc} {
+      allow get, list: if isAdmin() || (isTeacher() && resource.data.owner == 'tanya');
+      allow create, update: if isAdmin() || (isTeacher() && request.resource.data.owner == 'tanya');
+      allow delete: if isAdmin() || (isTeacher() && resource.data.owner == 'tanya');
+    }
+
+    // Группы: у каждой из преподавателей свои
+    // ({name, link, students, owner, createdAt})
+    match /groups/{doc} {
+      allow get, list: if isAdmin() || (isTeacher() && resource.data.owner == 'tanya');
+      allow create, update: if isAdmin() || (isTeacher() && request.resource.data.owner == 'tanya');
+      allow delete: if isAdmin() || (isTeacher() && resource.data.owner == 'tanya');
+    }
+
+    // Уведомления: документы anna и tanya ({items: [{id, type, message, from, timestamp, read}]})
+    match /notifications/{owner} {
+      allow get, list: if isAdmin() || (isTeacher() && owner == 'tanya');
+      allow create, update: if isAdmin() || (isTeacher() && owner == 'tanya');
+      allow delete: if false;
+    }
+
+    // ============ Учёт оплат (только админ) ============
+
+    // Тарифы/абонементы ({owner, name, subject, days, pricePerLesson, active, createdAt})
+    match /subscriptions/{doc} {
+      allow read, write: if isAdmin();
+    }
+
+    // Записи «ученик ↔ абонемент»
+    // ({owner, studentId, studentName, subscriptionId, groupName, pricePerLesson, days, startDate, endDate, active, createdAt})
+    match /enrollments/{doc} {
+      allow read, write: if isAdmin();
+    }
+
+    // Начисления по месяцам ({owner, enrollmentId, year, month, ...}; unique по enrollmentId+year+month)
+    match /payments/{doc} {
+      allow read, write: if isAdmin();
+    }
+
+    // Журнал изменений ({owner, ts, action, studentName, subscriptionName, year, month, details})
+    match /audit/{doc} {
+      allow read, write: if isAdmin();
+    }
+
+    // Реквизиты и шаблоны ({owner, schoolName, ..., reminderTemplateOfficial, updatedAt})
+    match /settings/{doc} {
+      allow read, write: if isAdmin();
+    }
+
+    // Метка автопрогона начислений ({owner, lastAutoAccrualMonth, lastAutoAccrualAt})
+    match /paymentsMeta/{doc} {
+      allow read, write: if isAdmin();
+    }
+
+    // Всё остальное — запрещено
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

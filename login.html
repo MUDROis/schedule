@@ -1,0 +1,263 @@
+<!DOCTYPE html>
+<html lang="ru">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <meta name="color-scheme" content="dark">
+    <title>Вход — Расписание МУДРО</title>
+
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/golos-text@5/400.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/golos-text@5/500.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/golos-text@5/600.css">
+    <link rel="stylesheet" href="https://cdn.jsdelivr.net/npm/@fontsource/unbounded@5/600.css">
+    <link rel="stylesheet" href="https://cdnjs.cloudflare.com/ajax/libs/font-awesome/6.5.1/css/all.min.css">
+
+    <link rel="icon" href="favicon.svg" type="image/svg+xml">
+    <meta name="theme-color" content="#0a0d13">
+
+    <style>
+        :root {
+            --bg0: #0a0d13;
+            --surface: #141a26;
+            --line: rgba(255,255,255,.08);
+            --text: #eef1f8;
+            --muted: #8a93a8;
+            --accent: #ffb454;
+            --accent-hi: #ffc873;
+            --accent-ink: #221403;
+            --danger: #ff5d6c;
+        }
+
+        * { margin:0; padding:0; box-sizing:border-box; }
+        html, body { height:100%; }
+        body {
+            background:var(--bg0);
+            color:var(--text);
+            font-family:'Golos Text',system-ui,-apple-system,'Segoe UI',sans-serif;
+            display:flex;
+            align-items:center;
+            justify-content:center;
+            padding:20px;
+        }
+
+        .orb {
+            position:fixed;
+            border-radius:50%;
+            filter:blur(90px);
+            opacity:.16;
+            pointer-events:none;
+        }
+        .orb-a { width:420px; height:420px; background:#ffb454; top:-140px; right:-120px; }
+        .orb-b { width:360px; height:360px; background:#5856d6; bottom:-120px; left:-100px; opacity:.12; }
+
+        .login-card {
+            position:relative;
+            z-index:1;
+            width:100%;
+            max-width:400px;
+            background:var(--surface);
+            border:1px solid var(--line);
+            border-radius:20px;
+            padding:36px 30px;
+            box-shadow:0 24px 60px rgba(0,0,0,.5);
+        }
+
+        .logo {
+            width:56px; height:56px;
+            border-radius:16px;
+            background:linear-gradient(135deg,var(--accent),#ff9d3f);
+            display:flex; align-items:center; justify-content:center;
+            margin:0 auto 18px;
+            box-shadow:0 10px 24px rgba(255,180,84,.25);
+        }
+        h1 {
+            font-family:'Unbounded',sans-serif;
+            font-size:1.15rem;
+            text-align:center;
+            margin-bottom:6px;
+        }
+        .sub {
+            text-align:center;
+            color:var(--muted);
+            font-size:.88em;
+            margin-bottom:26px;
+        }
+
+        .form-group { margin-bottom:16px; }
+        label {
+            display:block;
+            font-size:.82em;
+            font-weight:600;
+            color:var(--muted);
+            margin-bottom:6px;
+        }
+        input {
+            width:100%;
+            padding:11px 14px;
+            border-radius:12px;
+            border:1px solid var(--line);
+            background:rgba(255,255,255,.03);
+            color:var(--text);
+            font-family:inherit;
+            font-size:.95em;
+            outline:none;
+            transition:border-color .2s, box-shadow .2s;
+        }
+        input:focus {
+            border-color:var(--accent);
+            box-shadow:0 0 0 3px rgba(255,180,84,.15);
+        }
+
+        .error-box {
+            display:none;
+            background:rgba(255,93,108,.1);
+            border:1px solid rgba(255,93,108,.35);
+            color:var(--danger);
+            font-size:.85em;
+            border-radius:10px;
+            padding:10px 14px;
+            margin-bottom:16px;
+        }
+        .error-box.show { display:block; }
+
+        .btn-login {
+            width:100%;
+            padding:13px;
+            border:none;
+            border-radius:12px;
+            background:linear-gradient(135deg,var(--accent),var(--accent-hi));
+            color:var(--accent-ink);
+            font-family:inherit;
+            font-size:.95em;
+            font-weight:700;
+            cursor:pointer;
+            transition:filter .2s, transform .1s;
+        }
+        .btn-login:hover { filter:brightness(1.06); }
+        .btn-login:active { transform:scale(.99); }
+        .btn-login[disabled] { opacity:.6; cursor:wait; }
+
+        #authGate {
+            position:fixed; inset:0; z-index:50;
+            display:flex; align-items:center; justify-content:center;
+            background:var(--bg0); color:var(--muted); font-size:.95em;
+        }
+        #authGate.error {
+            background:radial-gradient(circle at 20% 20%, rgba(255,180,84,.09), transparent 55%), var(--bg0);
+        }
+        .gate-card { max-width:420px; text-align:center; padding:30px; line-height:1.5; }
+        .gate-card h2 { font-family:'Unbounded',sans-serif; color:var(--text); margin-bottom:10px; }
+        .gate-card b { color:var(--accent); }
+        .gate-icon { font-size:2rem; margin-bottom:8px; }
+    </style>
+</head>
+<body>
+
+<div class="orb orb-a" aria-hidden="true"></div>
+<div class="orb orb-b" aria-hidden="true"></div>
+
+<main class="login-card" id="loginCard" style="display:none;">
+    <div class="logo" aria-hidden="true">
+        <svg width="28" height="28" viewBox="0 0 24 24" fill="none" stroke="#221403" stroke-width="3.2" stroke-linecap="round" stroke-linejoin="round"><rect x="3" y="4" width="18" height="18" rx="2" ry="2"/><line x1="16" y1="2" x2="16" y2="6"/><line x1="8" y1="2" x2="8" y2="6"/><line x1="3" y1="10" x2="21" y2="10"/></svg>
+    </div>
+    <h1>Расписание МУДРО</h1>
+    <p class="sub">Войдите, чтобы продолжить</p>
+
+    <form id="loginForm" novalidate>
+        <div class="form-group">
+            <label for="email">Email</label>
+            <input type="email" id="email" required autocomplete="username" placeholder="user@example.com">
+        </div>
+        <div class="form-group">
+            <label for="password">Пароль</label>
+            <input type="password" id="password" required autocomplete="current-password" placeholder="••••••••">
+        </div>
+        <div class="error-box" id="errorBox" role="alert"></div>
+        <button type="submit" class="btn-login" id="submitBtn"><i class="fa-solid fa-right-to-bracket"></i>&nbsp; Войти</button>
+    </form>
+</main>
+
+<!-- Показывается до проверки состояния входа -->
+<div id="authGate">
+    <div class="gate-card">Проверка доступа…</div>
+</div>
+
+<script>
+    window.__PAGE__ = { kind: 'login', owner: null };
+</script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-app-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-auth-compat.js"></script>
+<script src="https://www.gstatic.com/firebasejs/10.14.1/firebase-firestore-compat.js"></script>
+<script src="firebase-config.js"></script>
+<script src="auth.js"></script>
+<script>
+    (function () {
+        const gate = document.getElementById('authGate');
+        const card = document.getElementById('loginCard');
+        const form = document.getElementById('loginForm');
+        const emailInput = document.getElementById('email');
+        const passwordInput = document.getElementById('password');
+        const errorBox = document.getElementById('errorBox');
+        const submitBtn = document.getElementById('submitBtn');
+
+        function showError(msg) {
+            errorBox.textContent = msg;
+            errorBox.classList.add('show');
+        }
+
+        window.MudroLogin = { showError };
+
+        // Если пользователь ещё не вошёл — показываем форму
+        setTimeout(() => {
+            if (!firebase.auth().currentUser && gate.style.display !== 'none') {
+                gate.style.display = 'none';
+                card.style.display = '';
+            }
+        }, 800);
+
+        firebase.auth().onAuthStateChanged(user => {
+            if (!user) {
+                gate.style.display = 'none';
+                card.style.display = '';
+                if (location.search.indexOf('denied=1') !== -1) {
+                    showError('Этот аккаунт не имеет доступа.');
+                } else if (window.MudroAuth && !window.MudroAuth.rolesConfigured) {
+                    showError('Роли не настроены: заполните ROLE_EMAILS в firebase-config.js.');
+                }
+            }
+        });
+
+        form.addEventListener('submit', async e => {
+            e.preventDefault();
+            errorBox.classList.remove('show');
+
+            const email = emailInput.value.trim();
+            const password = passwordInput.value;
+
+            if (!email || !password) {
+                showError('Введите email и пароль.');
+                return;
+            }
+
+            submitBtn.disabled = true;
+            try {
+                await firebase.auth().signInWithEmailAndPassword(email, password);
+                // Дальше редирект выполнит auth.js
+            } catch (err) {
+                console.error(err);
+                const code = err && err.code ? err.code : '';
+                let msg = 'Не удалось войти. Попробуйте ещё раз.';
+                if (code === 'auth/invalid-email') msg = 'Некорректный email.';
+                else if (code === 'auth/user-not-found' || code === 'auth/wrong-password' || code === 'auth/invalid-credential') msg = 'Неверный email или пароль.';
+                else if (code === 'auth/too-many-requests') msg = 'Слишком много попыток входа. Подождите немного.';
+                else if (code === 'auth/network-request-failed') msg = 'Ошибка сети. Проверьте подключение.';
+                else if (code === 'auth/unauthorized-domain') msg = 'Домен не добавлен в Firebase: Authentication → Settings → Authorized domains.';
+                else if (code === 'auth/operation-not-allowed') msg = 'Вход по паролю выключен: включите Email/Password в Authentication → Sign-in method.';
+                showError(msg);
+                submitBtn.disabled = false;
+            }
+        });
+    })();
+</script>
+</body>
+</html>
