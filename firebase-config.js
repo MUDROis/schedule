@@ -1,0 +1,1 @@
+window.FIREBASE_CONFIG={apiKey:"AIzaSyAJ98KQLeZFJu2bM25Ka-yWIRMQjFDMtk8",authDomain:"schedule-c454d.firebaseapp.com",projectId:"schedule-c454d",storageBucket:"schedule-c454d.firebasestorage.app",messagingSenderId:"420931131519",appId:"1:420931131519:web:fb6633c82d54f2722c874a"},window.ROLE_EMAILS={anna:"mudro.is@yandex.ru",tanya:"english.i.s@yandex.ru"};
